@@ -1,0 +1,13 @@
+name = "carlog-cron-worker"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+# Se ejecuta cada día a las 08:00 UTC — revisa mantenimientos, repuestos e
+# ITVs próximos y envía las alertas pendientes.
+[triggers]
+crons = ["0 8 * * *"]
+
+# Configura estos secrets con `wrangler secret put <NOMBRE>` (ver README):
+#   AIRTABLE_API_KEY, AIRTABLE_BASE_ID, RESEND_API_KEY,
+#   VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT, APP_URL
