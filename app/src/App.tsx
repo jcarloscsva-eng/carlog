@@ -1,13 +1,13 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { DevEmailGate } from './components/DevEmailGate'
+import { AuthGate } from './components/AuthGate'
 import { VehiculosPage } from './pages/VehiculosPage'
 import { VehiculoDetailPage } from './pages/VehiculoDetailPage'
 import { ReportesPage } from './pages/ReportesPage'
 
 export default function App() {
   return (
-    <DevEmailGate>
+    <AuthGate>
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
@@ -17,6 +17,6 @@ export default function App() {
           </Route>
         </Routes>
       </BrowserRouter>
-    </DevEmailGate>
+    </AuthGate>
   )
 }

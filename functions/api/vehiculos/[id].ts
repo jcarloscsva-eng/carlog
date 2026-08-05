@@ -1,13 +1,14 @@
 import { airtableDelete, airtableUpdate, type AirtableEnv } from '../../../shared/airtable'
 import { TABLES, vehiculoFromAirtable } from '../../../shared/airtable-mappers'
+import type { AuthEnv } from '../../../shared/auth'
 import { json, withAuth } from '../../../shared/http'
 import { assertVehiculoDelUsuario } from '../../../shared/ownership'
 import type { Vehiculo } from '../../../shared/types'
 
-type Env = AirtableEnv
+type Env = AirtableEnv & AuthEnv
 
 export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params }) =>
-  withAuth(request, async (email) => {
+  withAuth(request, env, async (email) => {
     const id = String(params.id)
     await assertVehiculoDelUsuario(env, email, id)
     const body = (await request.json()) as Partial<Omit<Vehiculo, 'id' | 'propietarioEmail'>>
@@ -24,7 +25,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   })
 
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) =>
-  withAuth(request, async (email) => {
+  withAuth(request, env, async (email) => {
     const id = String(params.id)
     await assertVehiculoDelUsuario(env, email, id)
     await airtableDelete(env, TABLES.Vehiculos, id)

@@ -1,4 +1,4 @@
-import { getAuthenticatedEmail, UnauthenticatedError } from './auth'
+import { getAuthenticatedEmail, UnauthenticatedError, type AuthEnv } from './auth'
 import { ForbiddenError } from './ownership'
 
 export function json(data: unknown, status = 200): Response {
@@ -23,10 +23,11 @@ export function errorResponse(err: unknown): Response {
 /** Ejecuta `handler` con el email autenticado, devolviendo 401/500 en caso de error. */
 export async function withAuth(
   request: Request,
+  env: AuthEnv,
   handler: (email: string) => Promise<Response>,
 ): Promise<Response> {
   try {
-    const email = getAuthenticatedEmail(request)
+    const email = await getAuthenticatedEmail(request, env)
     return await handler(email)
   } catch (err) {
     return errorResponse(err)

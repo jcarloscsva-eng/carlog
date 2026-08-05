@@ -2,7 +2,8 @@
 
 Gestión de mantenimiento de vehículos: averías, mantenimientos, repuestos,
 ITV, alertas por email/push y reportes de gasto. PWA instalable, backend en
-Cloudflare Pages Functions, datos en Airtable, auth con Cloudflare Access.
+Cloudflare Pages Functions, datos en Airtable, login propio con código por
+email (sin depender de Cloudflare Access ni de tarjeta de crédito).
 
 ## Arquitectura
 
@@ -14,8 +15,9 @@ cron-worker/    Worker independiente con Cron Trigger diario para las alertas
 ```
 
 El frontend nunca habla directo con Airtable: todas las peticiones pasan por
-`functions/api/*`, que leen el email del usuario del header que inyecta
-Cloudflare Access y filtran los datos por propietario.
+`functions/api/*`. La identidad del usuario viene de una cookie de sesión
+firmada (HMAC) que se crea al verificar el código de acceso — no de
+Cloudflare Access — y todos los datos se filtran por ese email.
 
 ## 1. Crear la base de Airtable
 
@@ -89,21 +91,41 @@ son los que usa el código):
 | Referencia_Id | Single line text |
 | Fecha_Enviada | Date |
 
+**LoginCodes**
+| Campo | Tipo |
+|---|---|
+| Email | Single line text |
+| Code | Single line text |
+| ExpiresAt | Date (con hora) |
+| Used | Checkbox |
+| Attempts | Number |
+
 Consigue tu `AIRTABLE_API_KEY` (Personal Access Token con permisos
 `data.records:read`/`write` sobre esta base) en
 https://airtable.com/create/tokens, y el `AIRTABLE_BASE_ID` en la URL de la
 base o en https://airtable.com/api.
 
-## 2. Cloudflare Access (autenticación)
+## 2. Login propio (sin Cloudflare Access)
 
-1. Activa Cloudflare Zero Trust en tu cuenta (gratis hasta 50 usuarios).
-2. Crea una aplicación de tipo "Self-hosted" apuntando al dominio de tu
-   proyecto Pages (p. ej. `carlog.pages.dev` o tu dominio propio).
-3. Añade una política de acceso con la lista de emails permitidos (tú y tu
-   familia). Cada uno recibirá un código OTP por email al entrar.
-4. Cloudflare inyectará automáticamente el header
-   `Cf-Access-Authenticated-User-Email` en cada request — es lo que lee
-   `shared/auth.ts` para identificar al usuario.
+No usamos Cloudflare Access (el tier gratuito pide tarjeta de verificación).
+En su lugar, `functions/api/auth/*` implementa un login con código de un
+solo uso enviado por email:
+
+1. El usuario introduce su email → `POST /api/auth/request-code` genera un
+   código de 6 dígitos, lo guarda en la tabla `LoginCodes` (caduca en 10
+   minutos) y lo envía con Resend.
+2. El usuario introduce el código → `POST /api/auth/verify-code` lo valida
+   (máximo 5 intentos), y si es correcto, crea una cookie de sesión firmada
+   (HMAC-SHA256, 30 días) — `httpOnly`, `Secure`, `SameSite=Lax`.
+3. El resto de endpoints (`shared/http.ts` → `withAuth`) leen esa cookie y
+   verifican la firma con `SESSION_SECRET` para identificar al usuario.
+
+Variables a configurar:
+- `SESSION_SECRET`: cadena aleatoria larga (`openssl rand -hex 32`). Sin
+  esto nadie puede iniciar sesión — trátalo como una contraseña maestra.
+- `ALLOWED_EMAILS` (opcional pero recomendado): lista de emails separados
+  por coma (tú y tu familia). Si no se define, cualquier email puede pedir
+  un código.
 
 ## 3. Resend (email)
 
@@ -140,9 +162,10 @@ npm run dev:cron
 # dispara la revisión manualmente: curl http://localhost:8787/__run
 ```
 
-En local no hay Cloudflare Access delante, así que la app te pedirá un
-email de prueba la primera vez (se guarda en `localStorage` y se manda como
-header `X-Dev-User-Email`).
+El login funciona igual en local que en producción: pide tu email, te manda
+un código real por Resend (necesitas `RESEND_API_KEY` y `SESSION_SECRET` en
+`.dev.vars`) y verifica el código. La sesión dura 30 días, así que solo lo
+harás una vez por navegador.
 
 ## 6. Deploy
 
@@ -153,8 +176,8 @@ header `X-Dev-User-Email`).
    `app/dist`. Root directory: `/` (raíz del repo, para que Cloudflare
    detecte `functions/` automáticamente).
 3. Añade los secrets de `.env.example` en Settings → Environment variables
-   (o con `wrangler pages secret put <NOMBRE>`).
-4. Activa Cloudflare Access para el dominio del proyecto (paso 2).
+   (o con `wrangler pages secret put <NOMBRE>`), incluyendo `SESSION_SECRET`
+   y `ALLOWED_EMAILS`.
 
 **Cron worker (alertas):**
 ```bash

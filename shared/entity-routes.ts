@@ -6,8 +6,11 @@ import {
   airtableUpdate,
   type AirtableEnv,
 } from './airtable'
+import type { AuthEnv } from './auth'
 import { json, withAuth } from './http'
 import { assertVehiculoDelUsuario, getVehiculosDelUsuario } from './ownership'
+
+type Env = AirtableEnv & AuthEnv
 
 interface ConVehiculo {
   id: string
@@ -22,8 +25,8 @@ interface EntityConfig<T extends ConVehiculo> {
 
 /** GET (lista, filtrada por vehículos del usuario) y POST (crear) para una entidad ligada a un vehículo. */
 export function makeListCreateHandlers<T extends ConVehiculo>(config: EntityConfig<T>) {
-  const onRequestGet: PagesFunction<AirtableEnv> = async ({ request, env }) =>
-    withAuth(request, async (email) => {
+  const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
+    withAuth(request, env, async (email) => {
       const vehiculos = await getVehiculosDelUsuario(env, email)
       const ownedIds = new Set(vehiculos.map((v) => v.id))
       const records = await airtableList<Record<string, unknown>>(env, config.table)
@@ -33,8 +36,8 @@ export function makeListCreateHandlers<T extends ConVehiculo>(config: EntityConf
       return json(mine)
     })
 
-  const onRequestPost: PagesFunction<AirtableEnv> = async ({ request, env }) =>
-    withAuth(request, async (email) => {
+  const onRequestPost: PagesFunction<Env> = async ({ request, env }) =>
+    withAuth(request, env, async (email) => {
       const body = (await request.json()) as Omit<T, 'id'>
       await assertVehiculoDelUsuario(env, email, body.vehiculoId)
       const record = await airtableCreate(env, config.table, config.toAirtable(body))
@@ -53,8 +56,8 @@ export function makeItemHandlers<T extends ConVehiculo>(config: EntityConfig<T>)
     return item
   }
 
-  const onRequestPatch: PagesFunction<AirtableEnv> = async ({ request, env, params }) =>
-    withAuth(request, async (email) => {
+  const onRequestPatch: PagesFunction<Env> = async ({ request, env, params }) =>
+    withAuth(request, env, async (email) => {
       const id = String(params.id)
       const current = await loadOwned(env, email, id)
       const body = (await request.json()) as Partial<T>
@@ -64,8 +67,8 @@ export function makeItemHandlers<T extends ConVehiculo>(config: EntityConfig<T>)
       return json(config.fromAirtable(record.id, record.fields))
     })
 
-  const onRequestDelete: PagesFunction<AirtableEnv> = async ({ request, env, params }) =>
-    withAuth(request, async (email) => {
+  const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) =>
+    withAuth(request, env, async (email) => {
       const id = String(params.id)
       await loadOwned(env, email, id)
       await airtableDelete(env, config.table, id)

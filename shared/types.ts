@@ -81,3 +81,12 @@ export interface AlertaEnviada {
   referenciaId: string
   fechaEnviada: string
 }
+
+export interface LoginCode {
+  id: string
+  email: string
+  code: string
+  expiresAt: string
+  used: boolean
+  attempts: number
+}

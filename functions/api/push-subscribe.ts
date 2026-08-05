@@ -1,8 +1,9 @@
 import { airtableCreate, airtableFormulaString, airtableList, type AirtableEnv } from '../../shared/airtable'
 import { TABLES, pushSubscriptionToAirtable } from '../../shared/airtable-mappers'
+import type { AuthEnv } from '../../shared/auth'
 import { json, withAuth } from '../../shared/http'
 
-type Env = AirtableEnv
+type Env = AirtableEnv & AuthEnv
 
 interface SubscribeBody {
   endpoint: string
@@ -10,7 +11,7 @@ interface SubscribeBody {
 }
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) =>
-  withAuth(request, async (email) => {
+  withAuth(request, env, async (email) => {
     const body = (await request.json()) as SubscribeBody
 
     const existentes = await airtableList<Record<string, unknown>>(

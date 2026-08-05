@@ -1,10 +1,8 @@
-/**
- * Cloudflare Access injects this header on every request once the user has
- * authenticated. In local dev (no Access in front), fall back to a header
- * the developer sets manually so the app is still testable.
- */
-const ACCESS_EMAIL_HEADER = 'Cf-Access-Authenticated-User-Email'
-const DEV_EMAIL_HEADER = 'X-Dev-User-Email'
+import { parseSessionCookie, verifySessionToken } from './session'
+
+export interface AuthEnv {
+  SESSION_SECRET: string
+}
 
 export class UnauthenticatedError extends Error {
   constructor() {
@@ -13,13 +11,12 @@ export class UnauthenticatedError extends Error {
   }
 }
 
-export function getAuthenticatedEmail(request: Request): string {
-  const email =
-    request.headers.get(ACCESS_EMAIL_HEADER) ?? request.headers.get(DEV_EMAIL_HEADER)
+export async function getAuthenticatedEmail(request: Request, env: AuthEnv): Promise<string> {
+  const token = parseSessionCookie(request)
+  if (!token) throw new UnauthenticatedError()
 
-  if (!email) {
-    throw new UnauthenticatedError()
-  }
+  const email = await verifySessionToken(token, env.SESSION_SECRET)
+  if (!email) throw new UnauthenticatedError()
 
-  return email.toLowerCase()
+  return email
 }

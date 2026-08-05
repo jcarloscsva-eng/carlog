@@ -2,6 +2,7 @@ import type {
   AlertaEnviada,
   Averia,
   Itv,
+  LoginCode,
   Mantenimiento,
   PushSubscriptionRecord,
   Repuesto,
@@ -16,6 +17,7 @@ export const TABLES = {
   Itv: 'ITV',
   PushSubscriptions: 'PushSubscriptions',
   AlertasEnviadas: 'AlertasEnviadas',
+  LoginCodes: 'LoginCodes',
 } as const
 
 interface AirtableFields {
@@ -198,5 +200,28 @@ export function alertaEnviadaToAirtable(a: Omit<AlertaEnviada, 'id'>): AirtableF
     Tipo: a.tipo,
     Referencia_Id: a.referenciaId,
     Fecha_Enviada: a.fechaEnviada,
+  }
+}
+
+// --- LoginCodes ------------------------------------------------------------
+
+export function loginCodeFromAirtable(id: string, fields: AirtableFields): LoginCode {
+  return {
+    id,
+    email: String(fields.Email ?? ''),
+    code: String(fields.Code ?? ''),
+    expiresAt: String(fields.ExpiresAt ?? ''),
+    used: Boolean(fields.Used ?? false),
+    attempts: Number(fields.Attempts ?? 0),
+  }
+}
+
+export function loginCodeToAirtable(l: Omit<LoginCode, 'id'>): AirtableFields {
+  return {
+    Email: l.email,
+    Code: l.code,
+    ExpiresAt: l.expiresAt,
+    Used: l.used,
+    Attempts: l.attempts,
   }
 }

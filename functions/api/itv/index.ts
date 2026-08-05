@@ -1,14 +1,15 @@
 import { airtableCreate, airtableList, type AirtableEnv } from '../../../shared/airtable'
 import { TABLES, itvFromAirtable, itvToAirtable, vehiculoFromAirtable } from '../../../shared/airtable-mappers'
+import type { AuthEnv } from '../../../shared/auth'
 import { json, withAuth } from '../../../shared/http'
 import { calcularProximaItv } from '../../../shared/itv-rules'
 import { assertVehiculoDelUsuario, getVehiculosDelUsuario } from '../../../shared/ownership'
 import type { Itv } from '../../../shared/types'
 
-type Env = AirtableEnv
+type Env = AirtableEnv & AuthEnv
 
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
-  withAuth(request, async (email) => {
+  withAuth(request, env, async (email) => {
     const vehiculos = await getVehiculosDelUsuario(env, email)
     const ownedIds = new Set(vehiculos.map((v) => v.id))
     const records = await airtableList<Record<string, unknown>>(env, TABLES.Itv)
@@ -19,7 +20,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
   })
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) =>
-  withAuth(request, async (email) => {
+  withAuth(request, env, async (email) => {
     const body = (await request.json()) as Pick<Itv, 'vehiculoId' | 'fechaRealizada' | 'resultado'>
     await assertVehiculoDelUsuario(env, email, body.vehiculoId)
 

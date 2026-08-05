@@ -1,21 +1,25 @@
 # Plantilla de importación para Airtable
 
-Estos 7 CSV crean las tablas de Carlog con los nombres de campo correctos.
+Estos 8 CSV crean las tablas de Carlog con los nombres de campo correctos.
 Cada uno trae una fila de ejemplo (con datos ficticios) para que Airtable
 infiera bien el tipo de cada columna — bórrala en cuanto termines de
 configurar los tipos.
 
-**Importa en este orden** (1 a 7), porque las tablas 2-5 enlazan con
+**Si ya tienes la base creada** (tablas 1-7) y solo te falta el login
+propio: importa únicamente `8-LoginCodes.csv` como tabla nueva llamada
+`LoginCodes`, y salta directo a sus ajustes manuales más abajo.
+
+**Importa en este orden** (1 a 8), porque las tablas 2-5 enlazan con
 Vehiculos:
 
 1. En Airtable: **Add or import → CSV file** → sube `1-Vehiculos.csv` →
    marca "First row is field names" → importa como tabla nueva llamada
    `Vehiculos`.
-2. Repite para `2-Averias.csv` → `3-Mantenimientos.csv` →
-   `4-Repuestos.csv` → `5-ITV.csv` → `6-PushSubscriptions.csv` →
-   `7-AlertasEnviadas.csv`, cada uno como tabla nueva con el nombre sin el
+2. Repite para `2-Averias.csv`, `3-Mantenimientos.csv`, `4-Repuestos.csv`,
+   `5-ITV.csv`, `6-PushSubscriptions.csv`, `7-AlertasEnviadas.csv` y
+   `8-LoginCodes.csv`, cada uno como tabla nueva con el nombre sin el
    número (`Averias`, `Mantenimientos`, `Repuestos`, `ITV`,
-   `PushSubscriptions`, `AlertasEnviadas`).
+   `PushSubscriptions`, `AlertasEnviadas`, `LoginCodes`).
 
 ## Ajustes manuales tras importar (Airtable no los infiere del CSV)
 
@@ -36,6 +40,14 @@ Vehiculos:
 - **Campos Number**: `Año`, `Km`, `Km_Actual`, `Precio`, `Intervalo_Km`,
   `Intervalo_Meses`, `Vida_Util_Km`, `Vida_Util_Años` — confirma que sean
   **Number** (Precio con formato decimal, 2 dígitos).
+- **Tabla `LoginCodes`** (usada por el login propio):
+  - `ExpiresAt` → tipo **Date**, con la opción "Include a time field"
+    activada (necesitamos hora, no solo fecha).
+  - `Used` → tipo **Checkbox**.
+  - `Attempts` → tipo **Number** (entero, sin decimales).
+  - Esta tabla la rellena y limpia la propia app — no hace falta que metas
+    datos de ejemplo, la fila vacía del CSV es suficiente para crear las
+    columnas.
 - Borra la fila de ejemplo de cada tabla una vez revisados los tipos.
 
 Cuando termines, coge el **Base ID** (en la URL de la base, `app...`) y crea

@@ -5,16 +5,12 @@ import type {
   Repuesto,
   Vehiculo,
 } from '@shared/types'
-import { getDevEmail } from './devAuth'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const devEmail = getDevEmail()
-
   const res = await fetch(`/api${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
-      ...(devEmail ? { 'X-Dev-User-Email': devEmail } : {}),
       ...init?.headers,
     },
   })
@@ -29,6 +25,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  auth: {
+    me: () => request<{ email: string }>('/auth/me'),
+    requestCode: (email: string) =>
+      request<{ ok: true }>('/auth/request-code', { method: 'POST', body: JSON.stringify({ email }) }),
+    verifyCode: (email: string, code: string) =>
+      request<{ ok: true; email: string }>('/auth/verify-code', {
+        method: 'POST',
+        body: JSON.stringify({ email, code }),
+      }),
+    logout: () => request<{ ok: true }>('/auth/logout', { method: 'POST' }),
+  },
   vehiculos: {
     list: () => request<Vehiculo[]>('/vehiculos'),
     create: (data: Omit<Vehiculo, 'id' | 'propietarioEmail'>) =>
