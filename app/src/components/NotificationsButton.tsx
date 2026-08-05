@@ -18,20 +18,22 @@ export function NotificationsButton() {
   if (state === 'unsupported' || state === 'subscribed') return null
 
   return (
-    <button
-      onClick={async () => {
-        setError(null)
-        try {
-          await subscribeToPush()
-          setState('subscribed')
-        } catch (err) {
-          setError((err as Error).message)
-        }
-      }}
-      title={error ?? undefined}
-      className="btn-ghost"
-    >
-      🔔 Activar avisos
-    </button>
+    <div className="flex items-center gap-2">
+      <button
+        onClick={async () => {
+          setError(null)
+          try {
+            await subscribeToPush()
+            setState('subscribed')
+          } catch (err) {
+            setError((err as Error).message)
+          }
+        }}
+        className="btn-ghost"
+      >
+        🔔 Activar avisos
+      </button>
+      {error && <span className="text-xs text-red-400">{error}</span>}
+    </div>
   )
 }
