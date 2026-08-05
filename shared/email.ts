@@ -20,7 +20,7 @@ export async function sendEmail(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: 'Carlog <alertas@resend.dev>',
+      from: 'Carlog <alertas@jcastillo.es>',
       to: [to],
       subject,
       html,

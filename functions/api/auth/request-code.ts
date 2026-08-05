@@ -43,12 +43,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json({ error: `Fallo guardando el código: ${(err as Error).message}` }, 500)
     }
 
-    await sendEmail(
-      env,
-      email,
-      'Tu código de acceso a Carlog',
-      `<p>Tu código de acceso es:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">${code}</p><p>Caduca en 10 minutos.</p>`,
-    ).catch((err) => console.error('Error enviando código de login', err))
+    try {
+      await sendEmail(
+        env,
+        email,
+        'Tu código de acceso a Carlog',
+        `<p>Tu código de acceso es:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">${code}</p><p>Caduca en 10 minutos.</p>`,
+      )
+    } catch (err) {
+      console.error('Error enviando código de login', err)
+      // TODO: una vez confirmado el envío en producción, volver a silenciar
+      // este fallo (devolver siempre ok:true) para no filtrar qué emails
+      // están en ALLOWED_EMAILS.
+      return json({ error: `Fallo enviando el email: ${(err as Error).message}` }, 500)
+    }
   }
 
   return json({ ok: true })
