@@ -32,11 +32,16 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     const code = generateCode()
     const expiresAt = new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString()
 
-    await airtableCreate(
-      env,
-      TABLES.LoginCodes,
-      loginCodeToAirtable({ email, code, expiresAt, used: false, attempts: 0 }),
-    )
+    try {
+      await airtableCreate(
+        env,
+        TABLES.LoginCodes,
+        loginCodeToAirtable({ email, code, expiresAt, used: false, attempts: 0 }),
+      )
+    } catch (err) {
+      console.error('Error creando LoginCode en Airtable', err)
+      return json({ error: `Fallo guardando el código: ${(err as Error).message}` }, 500)
+    }
 
     await sendEmail(
       env,
