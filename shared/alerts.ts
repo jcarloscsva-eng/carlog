@@ -44,7 +44,7 @@ export function calcularAlertasPendientes(
   for (const vehiculo of vehiculos) {
     const kmActual = vehiculo.kmActual
 
-    for (const m of ultimoMantenimientoConIntervalo.get(vehiculo.id) ?? []) {
+    for (const m of ultimoMantenimientoConIntervalo.get(vehiculo.matricula) ?? []) {
       const fechaObjetivo = m.intervaloMeses
         ? addMeses(new Date(m.fecha), m.intervaloMeses)
         : undefined
@@ -61,7 +61,7 @@ export function calcularAlertasPendientes(
       }
     }
 
-    for (const r of ultimoRepuestoPorTipo.get(vehiculo.id) ?? []) {
+    for (const r of ultimoRepuestoPorTipo.get(vehiculo.matricula) ?? []) {
       const fechaObjetivo = r.vidaUtilAnios
         ? addMeses(new Date(r.fecha), r.vidaUtilAnios * 12)
         : undefined
@@ -78,7 +78,7 @@ export function calcularAlertasPendientes(
       }
     }
 
-    const ultimaItv = ultimaItvPorVehiculo.get(vehiculo.id)
+    const ultimaItv = ultimaItvPorVehiculo.get(vehiculo.matricula)
     const fechaProximaItv = ultimaItv
       ? new Date(ultimaItv.fechaProxima)
       : calcularProximaItv(vehiculo)

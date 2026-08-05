@@ -24,11 +24,6 @@ interface AirtableFields {
   [key: string]: unknown
 }
 
-function linkedId(fields: AirtableFields, field: string): string {
-  const value = fields[field]
-  return Array.isArray(value) ? (value[0] as string) : ''
-}
-
 // --- Vehiculos ---------------------------------------------------------
 
 export function vehiculoFromAirtable(id: string, fields: AirtableFields): Vehiculo {
@@ -63,7 +58,7 @@ export function vehiculoToAirtable(v: Omit<Vehiculo, 'id'>): AirtableFields {
 export function averiaFromAirtable(id: string, fields: AirtableFields): Averia {
   return {
     id,
-    vehiculoId: linkedId(fields, 'Vehiculo'),
+    vehiculoId: String(fields.Vehiculo ?? ''),
     fecha: String(fields.Fecha ?? ''),
     descripcion: String(fields.Descripcion ?? ''),
     estado: (fields.Estado as Averia['estado']) ?? 'Pendiente',
@@ -72,7 +67,7 @@ export function averiaFromAirtable(id: string, fields: AirtableFields): Averia {
 
 export function averiaToAirtable(a: Omit<Averia, 'id'>): AirtableFields {
   return {
-    Vehiculo: [a.vehiculoId],
+    Vehiculo: a.vehiculoId,
     Fecha: a.fecha,
     Descripcion: a.descripcion,
     Estado: a.estado,
@@ -84,7 +79,7 @@ export function averiaToAirtable(a: Omit<Averia, 'id'>): AirtableFields {
 export function mantenimientoFromAirtable(id: string, fields: AirtableFields): Mantenimiento {
   return {
     id,
-    vehiculoId: linkedId(fields, 'Vehiculo'),
+    vehiculoId: String(fields.Vehiculo ?? ''),
     fecha: String(fields.Fecha ?? ''),
     km: Number(fields.Km ?? 0),
     precio: Number(fields.Precio ?? 0),
@@ -97,7 +92,7 @@ export function mantenimientoFromAirtable(id: string, fields: AirtableFields): M
 
 export function mantenimientoToAirtable(m: Omit<Mantenimiento, 'id'>): AirtableFields {
   return {
-    Vehiculo: [m.vehiculoId],
+    Vehiculo: m.vehiculoId,
     Fecha: m.fecha,
     Km: m.km,
     Precio: m.precio,
@@ -113,7 +108,7 @@ export function mantenimientoToAirtable(m: Omit<Mantenimiento, 'id'>): AirtableF
 export function repuestoFromAirtable(id: string, fields: AirtableFields): Repuesto {
   return {
     id,
-    vehiculoId: linkedId(fields, 'Vehiculo'),
+    vehiculoId: String(fields.Vehiculo ?? ''),
     tipoRepuesto: (fields.Tipo_Repuesto as Repuesto['tipoRepuesto']) ?? 'Otro',
     fecha: String(fields.Fecha ?? ''),
     km: Number(fields.Km ?? 0),
@@ -126,7 +121,7 @@ export function repuestoFromAirtable(id: string, fields: AirtableFields): Repues
 
 export function repuestoToAirtable(r: Omit<Repuesto, 'id'>): AirtableFields {
   return {
-    Vehiculo: [r.vehiculoId],
+    Vehiculo: r.vehiculoId,
     Tipo_Repuesto: r.tipoRepuesto,
     Fecha: r.fecha,
     Km: r.km,
@@ -142,7 +137,7 @@ export function repuestoToAirtable(r: Omit<Repuesto, 'id'>): AirtableFields {
 export function itvFromAirtable(id: string, fields: AirtableFields): Itv {
   return {
     id,
-    vehiculoId: linkedId(fields, 'Vehiculo'),
+    vehiculoId: String(fields.Vehiculo ?? ''),
     fechaRealizada: String(fields.Fecha_Realizada ?? ''),
     resultado: (fields.Resultado as Itv['resultado']) ?? 'Favorable',
     fechaProxima: String(fields.Fecha_Proxima ?? ''),
@@ -151,7 +146,7 @@ export function itvFromAirtable(id: string, fields: AirtableFields): Itv {
 
 export function itvToAirtable(i: Omit<Itv, 'id'>): AirtableFields {
   return {
-    Vehiculo: [i.vehiculoId],
+    Vehiculo: i.vehiculoId,
     Fecha_Realizada: i.fechaRealizada,
     Resultado: i.resultado,
     Fecha_Proxima: i.fechaProxima,

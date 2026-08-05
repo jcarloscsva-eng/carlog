@@ -155,7 +155,7 @@ export function ReportesPage() {
         <select value={vehiculoId} onChange={(e) => setVehiculoId(e.target.value)} className="input">
           <option value="todos">Todos los vehículos</option>
           {vehiculos.map((v) => (
-            <option key={v.id} value={v.id}>
+            <option key={v.id} value={v.matricula}>
               {v.marca} {v.modelo}
             </option>
           ))}

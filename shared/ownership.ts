@@ -22,7 +22,7 @@ export class ForbiddenError extends Error {
   }
 }
 
-/** Lanza ForbiddenError si `vehiculoId` no pertenece al usuario autenticado. */
+/** Lanza ForbiddenError si el id de un registro de Vehiculos no pertenece al usuario. */
 export async function assertVehiculoDelUsuario(
   env: AirtableEnv,
   email: string,
@@ -30,6 +30,21 @@ export async function assertVehiculoDelUsuario(
 ): Promise<void> {
   const propios = await getVehiculosDelUsuario(env, email)
   if (!propios.some((v) => v.id === vehiculoId)) {
+    throw new ForbiddenError()
+  }
+}
+
+/**
+ * Lanza ForbiddenError si la matrícula (el `vehiculoId` que usan
+ * Averias/Mantenimientos/Repuestos/ITV) no pertenece al usuario autenticado.
+ */
+export async function assertMatriculaDelUsuario(
+  env: AirtableEnv,
+  email: string,
+  matricula: string,
+): Promise<void> {
+  const propios = await getVehiculosDelUsuario(env, email)
+  if (!propios.some((v) => v.matricula === matricula)) {
     throw new ForbiddenError()
   }
 }

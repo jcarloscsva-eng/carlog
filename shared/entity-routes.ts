@@ -8,7 +8,7 @@ import {
 } from './airtable'
 import type { AuthEnv } from './auth'
 import { json, withAuth } from './http'
-import { assertVehiculoDelUsuario, getVehiculosDelUsuario } from './ownership'
+import { assertMatriculaDelUsuario, getVehiculosDelUsuario } from './ownership'
 
 type Env = AirtableEnv & AuthEnv
 
@@ -28,18 +28,18 @@ export function makeListCreateHandlers<T extends ConVehiculo>(config: EntityConf
   const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
     withAuth(request, env, async (email) => {
       const vehiculos = await getVehiculosDelUsuario(env, email)
-      const ownedIds = new Set(vehiculos.map((v) => v.id))
+      const ownedMatriculas = new Set(vehiculos.map((v) => v.matricula))
       const records = await airtableList<Record<string, unknown>>(env, config.table)
       const mine = records
         .map((r) => config.fromAirtable(r.id, r.fields))
-        .filter((item) => ownedIds.has(item.vehiculoId))
+        .filter((item) => ownedMatriculas.has(item.vehiculoId))
       return json(mine)
     })
 
   const onRequestPost: PagesFunction<Env> = async ({ request, env }) =>
     withAuth(request, env, async (email) => {
       const body = (await request.json()) as Omit<T, 'id'>
-      await assertVehiculoDelUsuario(env, email, body.vehiculoId)
+      await assertMatriculaDelUsuario(env, email, body.vehiculoId)
       const record = await airtableCreate(env, config.table, config.toAirtable(body))
       return json(config.fromAirtable(record.id, record.fields), 201)
     })
@@ -52,7 +52,7 @@ export function makeItemHandlers<T extends ConVehiculo>(config: EntityConfig<T>)
   async function loadOwned(env: AirtableEnv, email: string, id: string): Promise<T> {
     const existing = await airtableGet<Record<string, unknown>>(env, config.table, id)
     const item = config.fromAirtable(existing.id, existing.fields)
-    await assertVehiculoDelUsuario(env, email, item.vehiculoId)
+    await assertMatriculaDelUsuario(env, email, item.vehiculoId)
     return item
   }
 

@@ -12,7 +12,7 @@ type Tab = (typeof TABS)[number]
 
 export function VehiculoDetailPage() {
   const { id } = useParams<{ id: string }>()
-  const vehiculoId = id!
+  const routeId = id!
   const [tab, setTab] = useState<Tab>('Averías')
 
   const { data: vehiculos } = useCollection(api.vehiculos.list)
@@ -21,7 +21,10 @@ export function VehiculoDetailPage() {
   const { data: repuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
   const { data: itvs, reload: reloadItv } = useCollection(api.itv.list)
 
-  const vehiculo = vehiculos.find((v) => v.id === vehiculoId)
+  const vehiculo = vehiculos.find((v) => v.id === routeId)
+  // Averias/Mantenimientos/Repuestos/ITV enlazan por matrícula (texto), no
+  // por el id de registro de Airtable — ver shared/types.ts.
+  const matricula = vehiculo?.matricula ?? ''
 
   return (
     <div>
@@ -59,29 +62,29 @@ export function VehiculoDetailPage() {
 
       {tab === 'Averías' && (
         <AveriasTab
-          vehiculoId={vehiculoId}
-          averias={averias.filter((a) => a.vehiculoId === vehiculoId)}
+          vehiculoId={matricula}
+          averias={averias.filter((a) => a.vehiculoId === matricula)}
           reload={reloadAverias}
         />
       )}
       {tab === 'Mantenimientos' && (
         <MantenimientosTab
-          vehiculoId={vehiculoId}
-          mantenimientos={mantenimientos.filter((m) => m.vehiculoId === vehiculoId)}
+          vehiculoId={matricula}
+          mantenimientos={mantenimientos.filter((m) => m.vehiculoId === matricula)}
           reload={reloadMantenimientos}
         />
       )}
       {tab === 'Repuestos' && (
         <RepuestosTab
-          vehiculoId={vehiculoId}
-          repuestos={repuestos.filter((r) => r.vehiculoId === vehiculoId)}
+          vehiculoId={matricula}
+          repuestos={repuestos.filter((r) => r.vehiculoId === matricula)}
           reload={reloadRepuestos}
         />
       )}
       {tab === 'ITV' && (
         <ItvTab
-          vehiculoId={vehiculoId}
-          itvs={itvs.filter((i) => i.vehiculoId === vehiculoId)}
+          vehiculoId={matricula}
+          itvs={itvs.filter((i) => i.vehiculoId === matricula)}
           reload={reloadItv}
         />
       )}

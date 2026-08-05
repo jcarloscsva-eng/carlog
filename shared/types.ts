@@ -12,6 +12,13 @@ export interface Vehiculo {
   kmActualFecha: string
 }
 
+/**
+ * En Averias/Mantenimientos/Repuestos/ITV, `vehiculoId` es la Matricula del
+ * vehículo (texto plano), no el id de registro de Airtable — el campo
+ * "Vehiculo" en esas tablas es de texto, no un Link to another record
+ * (crear campos Link requiere permiso de Creador en la base, que no todos
+ * los colaboradores tienen).
+ */
 export type AveriaEstado = 'Pendiente' | 'Resuelta'
 
 export interface Averia {
