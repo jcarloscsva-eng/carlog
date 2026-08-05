@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "carlog-app",
-      "runtimeExecutable": "app/node_modules/.bin/vite",
+      "runtimeExecutable": "node_modules/.bin/vite",
       "runtimeArgs": ["app", "--config", "app/vite.config.ts"],
       "port": 5173
     }

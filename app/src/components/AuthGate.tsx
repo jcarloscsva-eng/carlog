@@ -20,7 +20,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [])
 
   if (email === undefined) {
-    return <div className="p-6 text-sm text-slate-500">Cargando…</div>
+    return <div className="flex min-h-screen items-center justify-center bg-carbon text-sm text-ink-dim">Cargando…</div>
   }
 
   if (email === null) {
@@ -77,69 +77,78 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h1 className="mb-1 text-lg font-semibold text-slate-900">🚗 Carlog</h1>
-        <p className="mb-4 text-sm text-slate-500">
-          {step === 'email'
-            ? 'Introduce tu email para recibir un código de acceso.'
-            : `Introduce el código que te hemos enviado a ${email}.`}
-        </p>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-carbon p-4">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, #d4cfc7 1px, transparent 1px), linear-gradient(to bottom, #d4cfc7 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
 
-        {step === 'email' ? (
-          <form onSubmit={handleRequestCode}>
-            <input
-              type="email"
-              required
-              autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="tu@email.com"
-              className="input mb-3"
-            />
-            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {submitting ? 'Enviando…' : 'Enviar código'}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleVerifyCode}>
-            <input
-              type="text"
-              inputMode="numeric"
-              required
-              autoFocus
-              maxLength={6}
-              value={code}
-              onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="123456"
-              className="input mb-3 text-center text-lg tracking-[0.3em]"
-            />
-            {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              {submitting ? 'Comprobando…' : 'Entrar'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setStep('email')
-                setCode('')
-                setError(null)
-              }}
-              className="mt-2 w-full text-xs text-slate-500 hover:text-slate-700"
-            >
-              Usar otro email
-            </button>
-          </form>
-        )}
+      <div className="relative w-full max-w-sm">
+        <div className="mb-6 text-center">
+          <span className="eyebrow justify-center">Gestión de vehículos</span>
+          <h1 className="heading mt-3 text-3xl">
+            Car<em>log</em>
+          </h1>
+        </div>
+
+        <div className="panel p-6">
+          <p className="mb-4 text-sm text-ink-dim">
+            {step === 'email'
+              ? 'Introduce tu email para recibir un código de acceso.'
+              : `Introduce el código que te hemos enviado a ${email}.`}
+          </p>
+
+          {step === 'email' ? (
+            <form onSubmit={handleRequestCode}>
+              <input
+                type="email"
+                required
+                autoFocus
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="input mb-3"
+              />
+              {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+              <button type="submit" disabled={submitting} className="btn-primary w-full">
+                {submitting ? 'Enviando…' : 'Enviar código'}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyCode}>
+              <input
+                type="text"
+                inputMode="numeric"
+                required
+                autoFocus
+                maxLength={6}
+                value={code}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                placeholder="123456"
+                className="input mb-3 text-center text-lg tracking-[0.3em]"
+              />
+              {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+              <button type="submit" disabled={submitting} className="btn-primary w-full">
+                {submitting ? 'Comprobando…' : 'Entrar'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setStep('email')
+                  setCode('')
+                  setError(null)
+                }}
+                className="mt-2 w-full text-xs text-ink-dim hover:text-gold"
+              >
+                Usar otro email
+              </button>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   )

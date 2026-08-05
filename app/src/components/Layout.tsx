@@ -3,18 +3,18 @@ import { NotificationsButton } from './NotificationsButton'
 import { useAuth } from './AuthGate'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `rounded-lg px-3 py-2 text-sm font-medium ${
-    isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-  }`
+  `nav-link ${isActive ? 'active' : ''}`
 
 export function Layout() {
   const { email, logout } = useAuth()
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <span className="text-lg font-semibold text-slate-900">🚗 Carlog</span>
+    <div className="min-h-screen bg-carbon">
+      <header className="border-b border-white/[0.06]">
+        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+          <span className="font-display text-xl font-semibold text-ink-bright">
+            Car<em className="text-gold italic">log</em>
+          </span>
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={linkClass}>
               Vehículos
@@ -23,17 +23,14 @@ export function Layout() {
               Reportes
             </NavLink>
             <NotificationsButton />
-            <span className="ml-2 hidden text-xs text-slate-400 sm:inline">{email}</span>
-            <button
-              onClick={logout}
-              className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            >
+            <span className="ml-2 hidden text-xs text-ink-dim sm:inline">{email}</span>
+            <button onClick={logout} className="nav-link">
               Salir
             </button>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="mx-auto max-w-5xl px-4 py-8">
         <Outlet />
       </main>
     </div>

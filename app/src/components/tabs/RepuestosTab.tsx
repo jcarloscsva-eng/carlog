@@ -50,7 +50,7 @@ export function RepuestosTab({
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-3">
+      <form onSubmit={handleSubmit} className="panel mb-4 grid gap-2 p-4 sm:grid-cols-3">
         <select name="tipoRepuesto" required className="input" defaultValue="Neumáticos">
           {TIPOS.map((t) => (
             <option key={t} value={t}>
@@ -65,26 +65,23 @@ export function RepuestosTab({
         <div />
         <input name="vidaUtilKm" type="number" placeholder="Vida útil en km (opcional)" className="input" />
         <input name="vidaUtilAnios" type="number" placeholder="Vida útil en años (opcional)" className="input" />
-        {error && <p className="text-sm text-red-600 sm:col-span-3">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="sm:col-span-3 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+        <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
           {submitting ? 'Guardando…' : 'Añadir repuesto'}
         </button>
       </form>
 
       <ul className="space-y-2">
         {repuestos.map((r) => (
-          <li key={r.id} className="rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-sm text-slate-900">{r.tipoRepuesto}</p>
-            <p className="text-xs text-slate-500">
-              {r.fecha} · {r.km.toLocaleString('es-ES')} km · {r.precio.toFixed(2)} € · {r.tienda}
+          <li key={r.id} className="panel p-3">
+            <p className="text-sm text-ink">{r.tipoRepuesto}</p>
+            <p className="text-xs text-ink-dim">
+              {r.fecha} · {r.km.toLocaleString('es-ES')} km ·{' '}
+              <span className="text-gold">{r.precio.toFixed(2)} €</span> · {r.tienda}
             </p>
           </li>
         ))}
-        {repuestos.length === 0 && <p className="text-sm text-slate-500">Sin repuestos registrados.</p>}
+        {repuestos.length === 0 && <p className="text-sm text-ink-dim">Sin repuestos registrados.</p>}
       </ul>
     </div>
   )

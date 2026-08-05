@@ -9,13 +9,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg'],
       manifest: {
         name: 'Carlog',
         short_name: 'Carlog',
         description: 'Gestión de mantenimiento de vehículos',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#22272e',
+        background_color: '#22272e',
         display: 'standalone',
         start_url: '/',
         icons: [

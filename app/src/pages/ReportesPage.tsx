@@ -129,9 +129,10 @@ export function ReportesPage() {
 
   return (
     <div>
-      <h1 className="mb-4 text-xl font-semibold text-slate-900">Reportes</h1>
+      <span className="eyebrow">Análisis de gasto</span>
+      <h1 className="heading mt-1 mb-6 text-2xl">Reportes</h1>
 
-      <div className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-4">
+      <div className="panel mb-4 grid gap-3 p-4 sm:grid-cols-4">
         <select
           value={periodo}
           onChange={(e) => setPeriodo(e.target.value as Periodo)}
@@ -160,7 +161,7 @@ export function ReportesPage() {
           ))}
         </select>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-ink-dim">
           <label className="flex items-center gap-1">
             <input
               type="checkbox"
@@ -180,24 +181,28 @@ export function ReportesPage() {
         </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4">
-        <p className="text-lg font-semibold text-slate-900">Total: {total.toFixed(2)} €</p>
-        <button
-          onClick={exportarPdf}
-          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-        >
+      <div className="panel mb-4 flex items-center justify-between p-4">
+        <p className="font-display text-lg font-semibold text-ink-bright">
+          Total: <span className="text-gold">{total.toFixed(2)} €</span>
+        </p>
+        <button onClick={exportarPdf} className="btn-primary">
           Exportar PDF
         </button>
       </div>
 
-      <div className="mb-4 h-72 rounded-xl border border-slate-200 bg-white p-4">
+      <div className="panel mb-4 h-72 p-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={porMes}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="mes" fontSize={12} />
-            <YAxis fontSize={12} />
-            <Tooltip formatter={(value) => `${Number(value).toFixed(2)} €`} />
-            <Bar dataKey="total" fill="#0f172a" radius={[4, 4, 0, 0]} />
+            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0f" />
+            <XAxis dataKey="mes" fontSize={12} stroke="#8d8a81" />
+            <YAxis fontSize={12} stroke="#8d8a81" />
+            <Tooltip
+              formatter={(value) => `${Number(value).toFixed(2)} €`}
+              contentStyle={{ background: '#262c34', border: '1px solid #ffffff1a', borderRadius: 8 }}
+              labelStyle={{ color: '#f0ece4' }}
+              itemStyle={{ color: '#c9a84c' }}
+            />
+            <Bar dataKey="total" fill="#c9a84c" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -206,17 +211,14 @@ export function ReportesPage() {
         {filtrados
           .sort((a, b) => b.fecha.localeCompare(a.fecha))
           .map((i) => (
-            <li
-              key={`${i.tipo}-${i.id}`}
-              className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3 text-sm"
-            >
-              <span>
+            <li key={`${i.tipo}-${i.id}`} className="panel flex items-center justify-between p-3 text-sm">
+              <span className="text-ink">
                 {i.fecha} · {i.tipo} · {i.categoria}
               </span>
-              <span className="font-medium">{i.precio.toFixed(2)} €</span>
+              <span className="font-medium text-gold">{i.precio.toFixed(2)} €</span>
             </li>
           ))}
-        {filtrados.length === 0 && <p className="text-sm text-slate-500">Sin registros en este periodo.</p>}
+        {filtrados.length === 0 && <p className="text-sm text-ink-dim">Sin registros en este periodo.</p>}
       </ul>
     </div>
   )

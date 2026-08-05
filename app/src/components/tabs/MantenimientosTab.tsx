@@ -41,7 +41,7 @@ export function MantenimientosTab({
 
   return (
     <div>
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-2 rounded-xl border border-slate-200 bg-white p-4 sm:grid-cols-3">
+      <form onSubmit={handleSubmit} className="panel mb-4 grid gap-2 p-4 sm:grid-cols-3">
         <input name="fecha" type="date" required className="input" />
         <input name="km" type="number" required placeholder="Km" className="input" />
         <input name="precio" type="number" step="0.01" required placeholder="Precio (€)" className="input" />
@@ -49,27 +49,24 @@ export function MantenimientosTab({
         <input name="elementos" required placeholder="Elementos abordados" className="input sm:col-span-2" />
         <input name="intervaloKm" type="number" placeholder="Recordar cada X km (opcional)" className="input" />
         <input name="intervaloMeses" type="number" placeholder="Recordar cada X meses (opcional)" className="input" />
-        {error && <p className="text-sm text-red-600 sm:col-span-3">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="sm:col-span-3 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+        <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
           {submitting ? 'Guardando…' : 'Añadir mantenimiento'}
         </button>
       </form>
 
       <ul className="space-y-2">
         {mantenimientos.map((m) => (
-          <li key={m.id} className="rounded-xl border border-slate-200 bg-white p-3">
-            <p className="text-sm text-slate-900">{m.elementos}</p>
-            <p className="text-xs text-slate-500">
-              {m.fecha} · {m.km.toLocaleString('es-ES')} km · {m.precio.toFixed(2)} € · {m.tienda}
+          <li key={m.id} className="panel p-3">
+            <p className="text-sm text-ink">{m.elementos}</p>
+            <p className="text-xs text-ink-dim">
+              {m.fecha} · {m.km.toLocaleString('es-ES')} km ·{' '}
+              <span className="text-gold">{m.precio.toFixed(2)} €</span> · {m.tienda}
             </p>
           </li>
         ))}
         {mantenimientos.length === 0 && (
-          <p className="text-sm text-slate-500">Sin mantenimientos registrados.</p>
+          <p className="text-sm text-ink-dim">Sin mantenimientos registrados.</p>
         )}
       </ul>
     </div>

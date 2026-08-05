@@ -47,26 +47,19 @@ export function AveriasTab({
           className="input"
           rows={2}
         />
-        <button
-          type="submit"
-          disabled={submitting}
-          className="shrink-0 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <button type="submit" disabled={submitting} className="btn-primary shrink-0">
           Añadir
         </button>
       </form>
 
       <ul className="space-y-2">
         {averias.map((a) => (
-          <li
-            key={a.id}
-            className="flex items-start justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3"
-          >
+          <li key={a.id} className="panel flex items-start justify-between gap-3 p-3">
             <div>
-              <p className="text-sm text-slate-900">{a.descripcion}</p>
-              <p className="text-xs text-slate-500">
+              <p className="text-sm text-ink">{a.descripcion}</p>
+              <p className="text-xs text-ink-dim">
                 {a.fecha} ·{' '}
-                <span className={a.estado === 'Pendiente' ? 'text-amber-600' : 'text-emerald-600'}>
+                <span className={a.estado === 'Pendiente' ? 'text-amber-400' : 'text-emerald-400'}>
                   {a.estado}
                 </span>
               </p>
@@ -76,20 +69,17 @@ export function AveriasTab({
                 href={`https://www.google.com/search?q=${encodeURIComponent(a.descripcion)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                className="btn-ghost px-2 py-1 text-xs"
               >
                 Buscar info
               </a>
-              <button
-                onClick={() => marcarResuelta(a)}
-                className="rounded-lg border border-slate-300 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
-              >
+              <button onClick={() => marcarResuelta(a)} className="btn-ghost px-2 py-1 text-xs">
                 {a.estado === 'Pendiente' ? 'Marcar resuelta' : 'Reabrir'}
               </button>
             </div>
           </li>
         ))}
-        {averias.length === 0 && <p className="text-sm text-slate-500">Sin averías registradas.</p>}
+        {averias.length === 0 && <p className="text-sm text-ink-dim">Sin averías registradas.</p>}
       </ul>
     </div>
   )

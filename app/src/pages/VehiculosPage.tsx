@@ -12,12 +12,12 @@ export function VehiculosPage() {
 
   return (
     <div>
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-900">Tus vehículos</h1>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white"
-        >
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <span className="eyebrow">Tu garaje</span>
+          <h1 className="heading mt-1 text-2xl">Vehículos</h1>
+        </div>
+        <button onClick={() => setShowForm((v) => !v)} className="btn-primary">
           {showForm ? 'Cancelar' : '+ Añadir vehículo'}
         </button>
       </div>
@@ -31,29 +31,29 @@ export function VehiculosPage() {
         />
       )}
 
-      {loading && <p className="text-sm text-slate-500">Cargando…</p>}
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {loading && <p className="text-sm text-ink-dim">Cargando…</p>}
+      {error && <p className="text-sm text-red-400">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {vehiculos.map((v) => (
           <Link
             key={v.id}
             to={`/vehiculos/${v.id}`}
-            className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-slate-300"
+            className="panel p-4 transition hover:border-gold/30"
           >
-            <p className="font-medium text-slate-900">
+            <p className="font-display text-lg font-medium text-ink-bright">
               {v.marca} {v.modelo}
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-ink-dim">
               {v.matricula} · {v.anio} · {v.tipo}
             </p>
-            <p className="mt-1 text-sm text-slate-500">{v.kmActual.toLocaleString('es-ES')} km</p>
+            <p className="mt-1 text-sm text-gold">{v.kmActual.toLocaleString('es-ES')} km</p>
           </Link>
         ))}
       </div>
 
       {!loading && vehiculos.length === 0 && (
-        <p className="text-sm text-slate-500">Todavía no has añadido ningún vehículo.</p>
+        <p className="text-sm text-ink-dim">Todavía no has añadido ningún vehículo.</p>
       )}
     </div>
   )
@@ -87,10 +87,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="mb-4 grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-2"
-    >
+    <form onSubmit={handleSubmit} className="panel mb-6 grid gap-3 p-4 sm:grid-cols-2">
       <input name="marca" required placeholder="Marca" className="input" />
       <input name="modelo" required placeholder="Modelo" className="input" />
       <input name="matricula" required placeholder="Matrícula" className="input" />
@@ -103,12 +100,8 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
         ))}
       </select>
       <input name="kmActual" required type="number" placeholder="Km actual" className="input" />
-      {error && <p className="sm:col-span-2 text-sm text-red-600">{error}</p>}
-      <button
-        type="submit"
-        disabled={submitting}
-        className="sm:col-span-2 rounded-lg bg-slate-900 px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
+      {error && <p className="sm:col-span-2 text-sm text-red-400">{error}</p>}
+      <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
         {submitting ? 'Guardando…' : 'Guardar vehículo'}
       </button>
     </form>

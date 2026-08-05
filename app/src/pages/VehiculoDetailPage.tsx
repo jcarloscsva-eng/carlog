@@ -25,31 +25,31 @@ export function VehiculoDetailPage() {
 
   return (
     <div>
-      <Link to="/" className="mb-3 inline-block text-sm text-slate-500 hover:text-slate-700">
+      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-gold">
         ← Volver a vehículos
       </Link>
 
       {vehiculo && (
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">
+        <h1 className="heading mb-1 text-2xl">
           {vehiculo.marca} {vehiculo.modelo}
         </h1>
       )}
       {vehiculo && (
-        <p className="mb-4 text-sm text-slate-500">
+        <p className="mb-6 text-sm text-ink-dim">
           {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-          {vehiculo.kmActual.toLocaleString('es-ES')} km
+          <span className="text-gold">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
         </p>
       )}
 
-      <div className="mb-4 flex gap-1 border-b border-slate-200">
+      <div className="mb-6 flex gap-1 border-b border-white/[0.06]">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-medium ${
+            className={`px-3 py-2 text-sm font-medium transition ${
               tab === t
-                ? 'border-b-2 border-slate-900 text-slate-900'
-                : 'text-slate-500 hover:text-slate-700'
+                ? 'border-b-2 border-gold text-gold'
+                : 'text-ink-dim hover:text-ink'
             }`}
           >
             {t}
