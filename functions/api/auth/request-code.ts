@@ -1,4 +1,4 @@
-import { airtableCreate, type AirtableEnv } from '../../../shared/airtable'
+import { airtableCreate, airtableFormulaString, airtableList, type AirtableEnv } from '../../../shared/airtable'
 import { TABLES, loginCodeToAirtable } from '../../../shared/airtable-mappers'
 import { sendEmail, type EmailEnv } from '../../../shared/email'
 import { json } from '../../../shared/http'
@@ -10,6 +10,33 @@ type Env = AirtableEnv &
   }
 
 const CODE_TTL_SECONDS = 10 * 60
+
+const COOLDOWN_SECONDS = 60
+const MAX_POR_HORA = 5
+
+async function demasiadosIntentos(env: Env, email: string): Promise<string | null> {
+  const emailEscapado = airtableFormulaString(email)
+
+  const recientes = await airtableList<Record<string, unknown>>(
+    env,
+    TABLES.LoginCodes,
+    `AND({Email} = '${emailEscapado}', IS_AFTER(CREATED_TIME(), DATEADD(NOW(), -${COOLDOWN_SECONDS}, 'seconds')))`,
+  )
+  if (recientes.length > 0) {
+    return 'Espera un momento antes de pedir otro código'
+  }
+
+  const ultimaHora = await airtableList<Record<string, unknown>>(
+    env,
+    TABLES.LoginCodes,
+    `AND({Email} = '${emailEscapado}', IS_AFTER(CREATED_TIME(), DATEADD(NOW(), -60, 'minutes')))`,
+  )
+  if (ultimaHora.length >= MAX_POR_HORA) {
+    return 'Demasiados intentos, prueba más tarde'
+  }
+
+  return null
+}
 
 function generateCode(): string {
   const bytes = crypto.getRandomValues(new Uint32Array(1))
@@ -29,6 +56,11 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   // Siempre respondemos igual, permitido o no, para no revelar qué emails están en la lista.
   if (isAllowed) {
+    const bloqueo = await demasiadosIntentos(env, email)
+    if (bloqueo) {
+      return json({ error: bloqueo }, 429)
+    }
+
     const code = generateCode()
     const expiresAt = new Date(Date.now() + CODE_TTL_SECONDS * 1000).toISOString()
 
@@ -43,20 +75,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       return json({ error: `Fallo guardando el código: ${(err as Error).message}` }, 500)
     }
 
-    try {
-      await sendEmail(
-        env,
-        email,
-        'Tu código de acceso a Carlog',
-        `<p>Tu código de acceso es:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">${code}</p><p>Caduca en 10 minutos.</p>`,
-      )
-    } catch (err) {
-      console.error('Error enviando código de login', err)
-      // TODO: una vez confirmado el envío en producción, volver a silenciar
-      // este fallo (devolver siempre ok:true) para no filtrar qué emails
-      // están en ALLOWED_EMAILS.
-      return json({ error: `Fallo enviando el email: ${(err as Error).message}` }, 500)
-    }
+    await sendEmail(
+      env,
+      email,
+      'Tu código de acceso a Carlog',
+      `<p>Tu código de acceso es:</p><p style="font-size:28px;font-weight:bold;letter-spacing:4px">${code}</p><p>Caduca en 10 minutos.</p>`,
+    ).catch((err) => console.error('Error enviando código de login', err))
   }
 
   return json({ ok: true })
