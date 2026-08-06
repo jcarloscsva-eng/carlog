@@ -103,5 +103,5 @@ export async function airtableDelete(
 
 /** Escapes a value for safe interpolation inside an Airtable filterByFormula string literal. */
 export function airtableFormulaString(value: string): string {
-  return value.replace(/'/g, "\\'")
+  return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
 }

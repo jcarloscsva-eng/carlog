@@ -61,7 +61,10 @@ export function makeItemHandlers<T extends ConVehiculo>(config: EntityConfig<T>)
       const id = String(params.id)
       const current = await loadOwned(env, email, id)
       const body = (await request.json()) as Partial<T>
-      const merged = { ...current, ...body } as T
+      // id y vehiculoId nunca son editables vía PATCH: se fijan a los valores
+      // ya verificados de `current`, ignorando lo que venga en el body, para
+      // que no se pueda reasignar el registro a otra matrícula/vehículo.
+      const merged = { ...current, ...body, id: current.id, vehiculoId: current.vehiculoId } as T
       const { id: _omit, ...fields } = merged
       const record = await airtableUpdate(env, config.table, id, config.toAirtable(fields as Omit<T, 'id'>))
       return json(config.fromAirtable(record.id, record.fields))
