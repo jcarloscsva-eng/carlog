@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
+import { calcularAntiguedad } from '@shared/vehiculo'
 import type { VehiculoTipo } from '@shared/types'
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
@@ -46,6 +47,7 @@ export function VehiculosPage() {
             </p>
             <p className="text-sm text-ink-dim">
               {v.matricula} · {v.anio} · {v.tipo}
+              {v.fechaCompra && ` · ${calcularAntiguedad(v.fechaCompra, new Date())} años contigo`}
             </p>
             <p className="mt-1 text-sm text-stamp">{v.kmActual.toLocaleString('es-ES')} km</p>
           </Link>
@@ -77,6 +79,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
         tipo: form.get('tipo') as VehiculoTipo,
         kmActual: Number(form.get('kmActual')),
         kmActualFecha: new Date().toISOString().slice(0, 10),
+        fechaCompra: form.get('fechaCompra') ? String(form.get('fechaCompra')) : undefined,
       })
       onCreated()
     } catch (err) {
@@ -100,6 +103,10 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
         ))}
       </select>
       <input name="kmActual" required type="number" placeholder="Km actual" className="input" />
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
+        <input name="fechaCompra" type="date" className="input w-full" />
+      </div>
       {error && <p className="sm:col-span-2 text-sm text-red-700">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
         {submitting ? 'Guardando…' : 'Guardar vehículo'}

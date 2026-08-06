@@ -13,6 +13,34 @@ interface MantenimientoFormValues {
   intervaloMeses?: number
 }
 
+/** Elementos habituales, a partir de los que ya se repiten en tu historial. */
+const ELEMENTOS_COMUNES = [
+  'Aceite',
+  'Filtro de aceite',
+  'Filtro de aire',
+  'Filtro de gasoil',
+  'Filtro de polen',
+  'Pastillas de freno delanteras',
+  'Pastillas de freno traseras',
+  'Discos de freno',
+  'Correa de distribución',
+  'Bujías',
+  'Descarbonización de motor',
+]
+
+function parseElementos(value: string | undefined): { comunes: string[]; otros: string } {
+  const partes = (value ?? '').split(',').map((s) => s.trim()).filter(Boolean)
+  const comunes = partes.filter((p) => ELEMENTOS_COMUNES.includes(p))
+  const otros = partes.filter((p) => !ELEMENTOS_COMUNES.includes(p)).join(', ')
+  return { comunes, otros }
+}
+
+function buildElementos(form: FormData): string {
+  const seleccionados = form.getAll('elemento').map(String)
+  const otros = String(form.get('elementosOtros') ?? '').trim()
+  return [...seleccionados, ...(otros ? [otros] : [])].join(', ')
+}
+
 function MantenimientoForm({
   initialValues,
   submitting,
@@ -29,6 +57,19 @@ function MantenimientoForm({
   const [alertaActiva, setAlertaActiva] = useState(
     Boolean(initialValues?.intervaloKm || initialValues?.intervaloMeses),
   )
+  const { comunes: comunesIniciales, otros: otrosIniciales } = parseElementos(initialValues?.elementos)
+  const [elementosSeleccionados, setElementosSeleccionados] = useState<Set<string>>(
+    new Set(comunesIniciales),
+  )
+
+  function toggleElemento(item: string) {
+    setElementosSeleccionados((prev) => {
+      const next = new Set(prev)
+      if (next.has(item)) next.delete(item)
+      else next.add(item)
+      return next
+    })
+  }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-2 sm:grid-cols-3">
@@ -66,13 +107,30 @@ function MantenimientoForm({
           className="input w-full"
         />
       </div>
-      <div className="sm:col-span-2">
+      <div className="sm:col-span-3">
         <label className="mb-1 block text-xs text-ink-dim">Elementos abordados</label>
+        <div className="flex flex-wrap gap-2">
+          {ELEMENTOS_COMUNES.map((item) => (
+            <label
+              key={item}
+              className="flex items-center gap-1.5 rounded border border-line bg-paper-2 px-2 py-1 text-xs text-ink"
+            >
+              <input
+                type="checkbox"
+                name="elemento"
+                value={item}
+                checked={elementosSeleccionados.has(item)}
+                onChange={() => toggleElemento(item)}
+              />
+              {item}
+            </label>
+          ))}
+        </div>
         <input
-          name="elementos"
-          required
-          defaultValue={initialValues?.elementos}
-          className="input w-full"
+          name="elementosOtros"
+          placeholder="Otros (opcional)"
+          defaultValue={otrosIniciales}
+          className="input mt-2 w-full"
         />
       </div>
 
@@ -124,7 +182,7 @@ function readFormValues(form: FormData): Omit<Mantenimiento, 'id' | 'vehiculoId'
     km: Number(form.get('km')),
     precio: Number(form.get('precio')),
     tienda: String(form.get('tienda')),
-    elementos: String(form.get('elementos')),
+    elementos: buildElementos(form),
     intervaloKm: form.get('intervaloKm') ? Number(form.get('intervaloKm')) : undefined,
     intervaloMeses: form.get('intervaloMeses') ? Number(form.get('intervaloMeses')) : undefined,
   }
@@ -141,6 +199,7 @@ export function MantenimientosTab({
 }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [formKey, setFormKey] = useState(0)
 
   const [editing, setEditing] = useState<Mantenimiento | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
@@ -150,11 +209,17 @@ export function MantenimientosTab({
     e.preventDefault()
     const formEl = e.currentTarget
     const form = new FormData(formEl)
+    const values = readFormValues(form)
+    if (!values.elementos) {
+      setError('Selecciona al menos un elemento abordado')
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {
-      await api.mantenimientos.create({ vehiculoId, ...readFormValues(form) })
+      await api.mantenimientos.create({ vehiculoId, ...values })
       formEl.reset()
+      setFormKey((k) => k + 1)
       reload()
     } catch (err) {
       setError((err as Error).message)
@@ -167,10 +232,15 @@ export function MantenimientosTab({
     e.preventDefault()
     if (!editing) return
     const form = new FormData(e.currentTarget)
+    const values = readFormValues(form)
+    if (!values.elementos) {
+      setEditError('Selecciona al menos un elemento abordado')
+      return
+    }
     setEditSubmitting(true)
     setEditError(null)
     try {
-      await api.mantenimientos.update(editing.id, readFormValues(form))
+      await api.mantenimientos.update(editing.id, values)
       setEditing(null)
       reload()
     } catch (err) {
@@ -190,6 +260,7 @@ export function MantenimientosTab({
     <div>
       <div className="panel mb-4 p-4">
         <MantenimientoForm
+          key={formKey}
           submitting={submitting}
           error={error}
           submitLabel="Añadir mantenimiento"

@@ -8,6 +8,7 @@ import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { Modal } from '../components/Modal'
 import { calcularProximasTareas } from '@shared/alerts'
+import { calcularAntiguedad } from '@shared/vehiculo'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV'] as const
@@ -60,6 +61,7 @@ export function VehiculoDetailPage() {
         anio: Number(form.get('anio')),
         tipo: form.get('tipo') as VehiculoTipo,
         kmActual: Number(form.get('kmActual')),
+        fechaCompra: form.get('fechaCompra') ? String(form.get('fechaCompra')) : undefined,
       })
       setEditing(false)
       reloadVehiculos()
@@ -85,6 +87,12 @@ export function VehiculoDetailPage() {
             <p className="text-sm text-ink-dim">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
               <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+              {vehiculo.fechaCompra && (
+                <>
+                  {' '}
+                  · {calcularAntiguedad(vehiculo.fechaCompra, new Date())} años contigo
+                </>
+              )}
             </p>
           </div>
           <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
@@ -196,6 +204,15 @@ export function VehiculoDetailPage() {
               placeholder="Km actual"
               className="input"
             />
+            <div className="sm:col-span-2">
+              <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
+              <input
+                name="fechaCompra"
+                type="date"
+                defaultValue={vehiculo.fechaCompra}
+                className="input w-full"
+              />
+            </div>
             {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}

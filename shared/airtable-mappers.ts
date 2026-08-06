@@ -37,6 +37,7 @@ export function vehiculoFromAirtable(id: string, fields: AirtableFields): Vehicu
     tipo: (fields.Tipo as Vehiculo['tipo']) ?? 'Turismo',
     kmActual: Number(fields.Km_Actual ?? 0),
     kmActualFecha: String(fields.Km_Actual_Fecha ?? ''),
+    fechaCompra: fields.Fecha_Compra ? String(fields.Fecha_Compra) : undefined,
   }
 }
 
@@ -50,6 +51,7 @@ export function vehiculoToAirtable(v: Omit<Vehiculo, 'id'>): AirtableFields {
     Tipo: v.tipo,
     Km_Actual: v.kmActual,
     Km_Actual_Fecha: v.kmActualFecha,
+    Fecha_Compra: v.fechaCompra || null,
   }
 }
 

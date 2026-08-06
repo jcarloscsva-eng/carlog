@@ -10,6 +10,8 @@ export interface Vehiculo {
   tipo: VehiculoTipo
   kmActual: number
   kmActualFecha: string
+  /** Fecha en la que compraste el vehículo (ISO yyyy-mm-dd). Opcional: los vehículos ya existentes no la tienen. */
+  fechaCompra?: string
 }
 
 /**
