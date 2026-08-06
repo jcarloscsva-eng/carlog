@@ -75,6 +75,8 @@ export const api = {
     list: () => request<Itv[]>('/itv'),
     create: (data: Pick<Itv, 'vehiculoId' | 'fechaRealizada' | 'resultado'>) =>
       request<Itv>('/itv', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Pick<Itv, 'fechaRealizada' | 'resultado'>>) =>
+      request<Itv>(`/itv/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/itv/${id}`, { method: 'DELETE' }),
   },
   pushSubscribe: (subscription: PushSubscriptionJSON) =>
