@@ -112,12 +112,13 @@ export function MantenimientosTab({
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const form = new FormData(e.currentTarget)
+    const formEl = e.currentTarget
+    const form = new FormData(formEl)
     setSubmitting(true)
     setError(null)
     try {
       await api.mantenimientos.create({ vehiculoId, ...readFormValues(form) })
-      e.currentTarget.reset()
+      formEl.reset()
       reload()
     } catch (err) {
       setError((err as Error).message)
