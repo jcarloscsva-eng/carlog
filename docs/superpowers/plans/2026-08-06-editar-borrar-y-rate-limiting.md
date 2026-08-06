@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Añadir edición y borrado desde la UI para Averías, Mantenimientos, Repuestos e ITV, y proteger `/api/auth/request-code` contra abuso (spam de códigos) por IP y por email.
+**Goal:** Añadir edición y borrado desde la UI para Averías, Mantenimientos, Repuestos e ITV, edición de la información de los Vehículos, y proteger `/api/auth/request-code` contra abuso (spam de códigos) por IP y por email.
 
 **Architecture:** Un componente `Modal` genérico nuevo, reutilizado por las 4 pestañas de vehículo, cada una extrayendo su formulario existente a un sub-componente parametrizable por `initialValues`. En el backend, `request-code.ts` gana dos comprobaciones de Airtable (`CREATED_TIME()`) antes de crear un código nuevo; la protección por IP se configura aparte en el dashboard de Cloudflare (no es código).
 
@@ -1025,8 +1025,216 @@ Hacer más de 10 peticiones seguidas a `/api/auth/request-code` desde la misma I
 
 ---
 
+### Task 8: Editar la información del Vehículo
+
+**Files:**
+- Modify: `app/src/pages/VehiculoDetailPage.tsx`
+
+**Interfaces:**
+- Consumes: `Modal` de Task 1; `api.vehiculos.update(id: string, data: Partial<Omit<Vehiculo, 'id' | 'propietarioEmail'>>): Promise<Vehiculo>` (ya existe en `app/src/lib/api.ts`); `reload` que ya expone `useCollection`.
+
+- [ ] **Step 1: Reemplazar todo el contenido del archivo**
+
+```tsx
+import { useState, type FormEvent } from 'react'
+import { Link, useParams } from 'react-router-dom'
+import { api } from '../lib/api'
+import { useCollection } from '../hooks/useCollection'
+import { AveriasTab } from '../components/tabs/AveriasTab'
+import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
+import { RepuestosTab } from '../components/tabs/RepuestosTab'
+import { ItvTab } from '../components/tabs/ItvTab'
+import { Modal } from '../components/Modal'
+import type { Vehiculo, VehiculoTipo } from '@shared/types'
+
+const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV'] as const
+type Tab = (typeof TABS)[number]
+
+const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
+
+export function VehiculoDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const routeId = id!
+  const [tab, setTab] = useState<Tab>('Averías')
+
+  const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
+  const { data: averias, reload: reloadAverias } = useCollection(api.averias.list)
+  const { data: mantenimientos, reload: reloadMantenimientos } = useCollection(api.mantenimientos.list)
+  const { data: repuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
+  const { data: itvs, reload: reloadItv } = useCollection(api.itv.list)
+
+  const vehiculo = vehiculos.find((v) => v.id === routeId)
+  // Averias/Mantenimientos/Repuestos/ITV enlazan por matrícula (texto), no
+  // por el id de registro de Airtable — ver shared/types.ts.
+  const matricula = vehiculo?.matricula ?? ''
+
+  const [editing, setEditing] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!vehiculo) return
+    const form = new FormData(e.currentTarget)
+    setEditSubmitting(true)
+    setEditError(null)
+    try {
+      await api.vehiculos.update(vehiculo.id, {
+        marca: String(form.get('marca')),
+        modelo: String(form.get('modelo')),
+        matricula: String(form.get('matricula')),
+        anio: Number(form.get('anio')),
+        tipo: form.get('tipo') as VehiculoTipo,
+        kmActual: Number(form.get('kmActual')),
+      })
+      setEditing(false)
+      reloadVehiculos()
+    } catch (err) {
+      setEditError((err as Error).message)
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
+  return (
+    <div>
+      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-gold">
+        ← Volver a vehículos
+      </Link>
+
+      {vehiculo && (
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="heading mb-1 text-2xl">
+              {vehiculo.marca} {vehiculo.modelo}
+            </h1>
+            <p className="text-sm text-ink-dim">
+              {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
+              <span className="text-gold">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+            </p>
+          </div>
+          <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
+            Editar vehículo
+          </button>
+        </div>
+      )}
+
+      <div className="mb-6 flex gap-1 border-b border-white/[0.06]">
+        {TABS.map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-3 py-2 text-sm font-medium transition ${
+              tab === t
+                ? 'border-b-2 border-gold text-gold'
+                : 'text-ink-dim hover:text-ink'
+            }`}
+          >
+            {t}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'Averías' && (
+        <AveriasTab
+          vehiculoId={matricula}
+          averias={averias.filter((a) => a.vehiculoId === matricula)}
+          reload={reloadAverias}
+        />
+      )}
+      {tab === 'Mantenimientos' && (
+        <MantenimientosTab
+          vehiculoId={matricula}
+          mantenimientos={mantenimientos.filter((m) => m.vehiculoId === matricula)}
+          reload={reloadMantenimientos}
+        />
+      )}
+      {tab === 'Repuestos' && (
+        <RepuestosTab
+          vehiculoId={matricula}
+          repuestos={repuestos.filter((r) => r.vehiculoId === matricula)}
+          reload={reloadRepuestos}
+        />
+      )}
+      {tab === 'ITV' && (
+        <ItvTab
+          vehiculoId={matricula}
+          itvs={itvs.filter((i) => i.vehiculoId === matricula)}
+          reload={reloadItv}
+        />
+      )}
+
+      <Modal open={editing} onClose={() => setEditing(false)} title="Editar vehículo">
+        {vehiculo && (
+          <form onSubmit={handleEditSubmit} className="grid gap-2 sm:grid-cols-2">
+            <input name="marca" required defaultValue={vehiculo.marca} placeholder="Marca" className="input" />
+            <input name="modelo" required defaultValue={vehiculo.modelo} placeholder="Modelo" className="input" />
+            <input
+              name="matricula"
+              required
+              defaultValue={vehiculo.matricula}
+              placeholder="Matrícula"
+              className="input"
+            />
+            <input
+              name="anio"
+              required
+              type="number"
+              defaultValue={vehiculo.anio}
+              placeholder="Año"
+              className="input"
+            />
+            <select name="tipo" required defaultValue={vehiculo.tipo} className="input">
+              {TIPOS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <input
+              name="kmActual"
+              required
+              type="number"
+              defaultValue={vehiculo.kmActual}
+              placeholder="Km actual"
+              className="input"
+            />
+            {editError && <p className="text-sm text-red-400 sm:col-span-2">{editError}</p>}
+            <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
+              {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </form>
+        )}
+      </Modal>
+    </div>
+  )
+}
+```
+
+**Nota:** cambiar la matrícula de un vehículo aquí **no** actualiza el campo
+`Vehiculo` (texto) de sus Averias/Mantenimientos/Repuestos/ITV ya
+existentes — quedarían huérfanos, igual que si se editase a mano en
+Airtable. Es una limitación conocida y aceptable (el spec no cubre
+renombrar matrículas); si el usuario cambia la matrícula, lo hará sabiendo
+que es principalmente para corregir un error tipográfico recién cometido,
+no para "cambiar" el vehículo.
+
+- [ ] **Step 2: Verificar tipos**
+
+Run: `cd app && npx tsc -b`
+Expected: sin errores.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add app/src/pages/VehiculoDetailPage.tsx
+git commit -m "Add vehicle info editing to VehiculoDetailPage"
+```
+
+---
+
 ## Self-Review
 
-- **Cobertura del spec**: Task 1 (Modal) + Tasks 3-6 (edición/borrado en las 4 pestañas) cubren la sección A completa. Task 2 (rate limit por email) + Task 7 (rate limit por IP) cubren la sección B completa. La sección "Intentos de acertar el código" ya estaba implementada — no requiere tarea.
+- **Cobertura del spec**: Task 1 (Modal) + Tasks 3-6 (edición/borrado en las 4 pestañas) cubren la sección A completa. Task 2 (rate limit por email) + Task 7 (rate limit por IP) cubren la sección B completa. La sección "Intentos de acertar el código" ya estaba implementada — no requiere tarea. Task 8 (editar Vehículo) cubre la ampliación de alcance pedida por el usuario tras aprobar el plan original.
 - **Placeholders**: ninguno — todo el código de cada paso es el código final a pegar.
 - **Consistencia de tipos**: `api.itv.update` se añade en Task 6 con la misma forma que `api.averias.update`/`api.mantenimientos.update`/`api.repuestos.update` ya existentes. `MantenimientoForm`/`RepuestoForm`/`ItvForm` siguen el mismo patrón (`initialValues?`, `submitting`, `error`, `submitLabel`, `onSubmit`) en las tres tareas donde se introducen.
