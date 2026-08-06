@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
@@ -6,16 +6,20 @@ import { AveriasTab } from '../components/tabs/AveriasTab'
 import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
 import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
+import { Modal } from '../components/Modal'
+import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV'] as const
 type Tab = (typeof TABS)[number]
+
+const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
 
 export function VehiculoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const routeId = id!
   const [tab, setTab] = useState<Tab>('Averías')
 
-  const { data: vehiculos } = useCollection(api.vehiculos.list)
+  const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
   const { data: averias, reload: reloadAverias } = useCollection(api.averias.list)
   const { data: mantenimientos, reload: reloadMantenimientos } = useCollection(api.mantenimientos.list)
   const { data: repuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
@@ -26,6 +30,34 @@ export function VehiculoDetailPage() {
   // por el id de registro de Airtable — ver shared/types.ts.
   const matricula = vehiculo?.matricula ?? ''
 
+  const [editing, setEditing] = useState(false)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
+
+  async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!vehiculo) return
+    const form = new FormData(e.currentTarget)
+    setEditSubmitting(true)
+    setEditError(null)
+    try {
+      await api.vehiculos.update(vehiculo.id, {
+        marca: String(form.get('marca')),
+        modelo: String(form.get('modelo')),
+        matricula: String(form.get('matricula')),
+        anio: Number(form.get('anio')),
+        tipo: form.get('tipo') as VehiculoTipo,
+        kmActual: Number(form.get('kmActual')),
+      })
+      setEditing(false)
+      reloadVehiculos()
+    } catch (err) {
+      setEditError((err as Error).message)
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
   return (
     <div>
       <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-stamp">
@@ -33,18 +65,23 @@ export function VehiculoDetailPage() {
       </Link>
 
       {vehiculo && (
-        <h1 className="heading mb-1 text-2xl">
-          {vehiculo.marca} {vehiculo.modelo}
-        </h1>
-      )}
-      {vehiculo && (
-        <p className="mb-6 text-sm text-ink-dim">
-          {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-          <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
-        </p>
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="heading mb-1 text-2xl">
+              {vehiculo.marca} {vehiculo.modelo}
+            </h1>
+            <p className="text-sm text-ink-dim">
+              {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
+              <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+            </p>
+          </div>
+          <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
+            Editar vehículo
+          </button>
+        </div>
       )}
 
-      <div className="mb-6 flex gap-1 border-b border-white/[0.06]">
+      <div className="mb-6 flex gap-1 border-b border-line">
         {TABS.map((t) => (
           <button
             key={t}
@@ -88,6 +125,49 @@ export function VehiculoDetailPage() {
           reload={reloadItv}
         />
       )}
+
+      <Modal open={editing} onClose={() => setEditing(false)} title="Editar vehículo">
+        {vehiculo && (
+          <form onSubmit={handleEditSubmit} className="grid gap-2 sm:grid-cols-2">
+            <input name="marca" required defaultValue={vehiculo.marca} placeholder="Marca" className="input" />
+            <input name="modelo" required defaultValue={vehiculo.modelo} placeholder="Modelo" className="input" />
+            <input
+              name="matricula"
+              required
+              defaultValue={vehiculo.matricula}
+              placeholder="Matrícula"
+              className="input"
+            />
+            <input
+              name="anio"
+              required
+              type="number"
+              defaultValue={vehiculo.anio}
+              placeholder="Año"
+              className="input"
+            />
+            <select name="tipo" required defaultValue={vehiculo.tipo} className="input">
+              {TIPOS.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <input
+              name="kmActual"
+              required
+              type="number"
+              defaultValue={vehiculo.kmActual}
+              placeholder="Km actual"
+              className="input"
+            />
+            {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
+            <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
+              {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </form>
+        )}
+      </Modal>
     </div>
   )
 }
