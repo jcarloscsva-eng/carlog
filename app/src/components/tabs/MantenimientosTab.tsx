@@ -26,6 +26,10 @@ function MantenimientoForm({
   submitLabel: string
   onSubmit: (e: FormEvent<HTMLFormElement>) => void
 }) {
+  const [alertaActiva, setAlertaActiva] = useState(
+    Boolean(initialValues?.intervaloKm || initialValues?.intervaloMeses),
+  )
+
   return (
     <form onSubmit={onSubmit} className="grid gap-2 sm:grid-cols-3">
       <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input" />
@@ -60,20 +64,41 @@ function MantenimientoForm({
         defaultValue={initialValues?.elementos}
         className="input sm:col-span-2"
       />
-      <input
-        name="intervaloKm"
-        type="number"
-        placeholder="Recordar cada X km (opcional)"
-        defaultValue={initialValues?.intervaloKm}
-        className="input"
-      />
-      <input
-        name="intervaloMeses"
-        type="number"
-        placeholder="Recordar cada X meses (opcional)"
-        defaultValue={initialValues?.intervaloMeses}
-        className="input"
-      />
+
+      <label className="flex items-center gap-2 text-sm text-ink sm:col-span-3">
+        <input
+          type="checkbox"
+          checked={alertaActiva}
+          onChange={(e) => setAlertaActiva(e.target.checked)}
+        />
+        Configurar alerta de recordatorio
+      </label>
+
+      {alertaActiva && (
+        <>
+          <div className="sm:col-span-1">
+            <label className="mb-1 block text-xs text-ink-dim">Avisar cada X km</label>
+            <input
+              name="intervaloKm"
+              type="number"
+              placeholder="Ej. 15000"
+              defaultValue={initialValues?.intervaloKm}
+              className="input w-full"
+            />
+          </div>
+          <div className="sm:col-span-1">
+            <label className="mb-1 block text-xs text-ink-dim">Avisar cada X meses</label>
+            <input
+              name="intervaloMeses"
+              type="number"
+              placeholder="Ej. 12"
+              defaultValue={initialValues?.intervaloMeses}
+              className="input w-full"
+            />
+          </div>
+        </>
+      )}
+
       {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
