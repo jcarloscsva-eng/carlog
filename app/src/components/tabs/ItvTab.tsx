@@ -45,7 +45,7 @@ export function ItvTab({
           <option value="Desfavorable">Desfavorable</option>
           <option value="Negativo">Negativo</option>
         </select>
-        {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+        {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
         <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
           {submitting ? 'Guardando…' : 'Registrar ITV pasada'}
         </button>
@@ -53,13 +53,13 @@ export function ItvTab({
 
       <ul className="space-y-2">
         {ordenadas.map((i) => (
-          <li key={i.id} className="panel p-3">
+          <li key={i.id} className="entry p-3">
             <p className="text-sm text-ink">
               Resultado: <span className="font-medium text-ink-bright">{i.resultado}</span>
             </p>
             <p className="text-xs text-ink-dim">
               Realizada el {i.fechaRealizada} · Próxima el{' '}
-              <span className="font-medium text-gold">
+              <span className="font-medium text-stamp">
                 {new Date(i.fechaProxima).toLocaleDateString('es-ES')}
               </span>
             </p>

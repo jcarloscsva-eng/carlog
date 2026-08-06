@@ -65,7 +65,7 @@ export function RepuestosTab({
         <div />
         <input name="vidaUtilKm" type="number" placeholder="Vida útil en km (opcional)" className="input" />
         <input name="vidaUtilAnios" type="number" placeholder="Vida útil en años (opcional)" className="input" />
-        {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+        {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
         <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
           {submitting ? 'Guardando…' : 'Añadir repuesto'}
         </button>
@@ -73,11 +73,11 @@ export function RepuestosTab({
 
       <ul className="space-y-2">
         {repuestos.map((r) => (
-          <li key={r.id} className="panel p-3">
+          <li key={r.id} className="entry p-3">
             <p className="text-sm text-ink">{r.tipoRepuesto}</p>
             <p className="text-xs text-ink-dim">
               {r.fecha} · {r.km.toLocaleString('es-ES')} km ·{' '}
-              <span className="text-gold">{r.precio.toFixed(2)} €</span> · {r.tienda}
+              <span className="text-stamp">{r.precio.toFixed(2)} €</span> · {r.tienda}
             </p>
           </li>
         ))}

@@ -20,7 +20,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }, [])
 
   if (email === undefined) {
-    return <div className="flex min-h-screen items-center justify-center bg-carbon text-sm text-ink-dim">Cargando…</div>
+    return <div className="flex min-h-screen items-center justify-center bg-paper text-sm text-ink-dim">Cargando…</div>
   }
 
   if (email === null) {
@@ -77,13 +77,12 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-carbon p-4">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-paper p-4">
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
-          backgroundImage:
-            'linear-gradient(to right, #d4cfc7 1px, transparent 1px), linear-gradient(to bottom, #d4cfc7 1px, transparent 1px)',
-          backgroundSize: '48px 48px',
+          backgroundImage: 'linear-gradient(to bottom, #3a352e 1px, transparent 1px)',
+          backgroundSize: '100% 32px',
         }}
       />
 
@@ -113,7 +112,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
                 placeholder="tu@email.com"
                 className="input mb-3"
               />
-              {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+              {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
               <button type="submit" disabled={submitting} className="btn-primary w-full">
                 {submitting ? 'Enviando…' : 'Enviar código'}
               </button>
@@ -131,7 +130,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
                 placeholder="123456"
                 className="input mb-3 text-center text-lg tracking-[0.3em]"
               />
-              {error && <p className="mb-3 text-sm text-red-400">{error}</p>}
+              {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
               <button type="submit" disabled={submitting} className="btn-primary w-full">
                 {submitting ? 'Comprobando…' : 'Entrar'}
               </button>
@@ -142,7 +141,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
                   setCode('')
                   setError(null)
                 }}
-                className="mt-2 w-full text-xs text-ink-dim hover:text-gold"
+                className="mt-2 w-full text-xs text-ink-dim hover:text-stamp"
               >
                 Usar otro email
               </button>

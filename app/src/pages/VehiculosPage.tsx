@@ -32,14 +32,14 @@ export function VehiculosPage() {
       )}
 
       {loading && <p className="text-sm text-ink-dim">Cargando…</p>}
-      {error && <p className="text-sm text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-700">{error}</p>}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {vehiculos.map((v) => (
           <Link
             key={v.id}
             to={`/vehiculos/${v.id}`}
-            className="panel p-4 transition hover:border-gold/30"
+            className="panel p-4 transition hover:border-stamp/30"
           >
             <p className="font-display text-lg font-medium text-ink-bright">
               {v.marca} {v.modelo}
@@ -47,7 +47,7 @@ export function VehiculosPage() {
             <p className="text-sm text-ink-dim">
               {v.matricula} · {v.anio} · {v.tipo}
             </p>
-            <p className="mt-1 text-sm text-gold">{v.kmActual.toLocaleString('es-ES')} km</p>
+            <p className="mt-1 text-sm text-stamp">{v.kmActual.toLocaleString('es-ES')} km</p>
           </Link>
         ))}
       </div>
@@ -100,7 +100,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
         ))}
       </select>
       <input name="kmActual" required type="number" placeholder="Km actual" className="input" />
-      {error && <p className="sm:col-span-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="sm:col-span-2 text-sm text-red-700">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
         {submitting ? 'Guardando…' : 'Guardar vehículo'}
       </button>

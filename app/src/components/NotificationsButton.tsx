@@ -33,7 +33,7 @@ export function NotificationsButton() {
       >
         🔔 Activar avisos
       </button>
-      {error && <span className="text-xs text-red-400">{error}</span>}
+      {error && <span className="text-xs text-red-700">{error}</span>}
     </div>
   )
 }

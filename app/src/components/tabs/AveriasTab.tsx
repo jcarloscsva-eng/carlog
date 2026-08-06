@@ -54,12 +54,12 @@ export function AveriasTab({
 
       <ul className="space-y-2">
         {averias.map((a) => (
-          <li key={a.id} className="panel flex items-start justify-between gap-3 p-3">
+          <li key={a.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{a.descripcion}</p>
               <p className="text-xs text-ink-dim">
                 {a.fecha} ·{' '}
-                <span className={a.estado === 'Pendiente' ? 'text-amber-400' : 'text-emerald-400'}>
+                <span className={a.estado === 'Pendiente' ? 'text-amber-700' : 'text-emerald-700'}>
                   {a.estado}
                 </span>
               </p>

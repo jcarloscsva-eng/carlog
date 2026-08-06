@@ -183,7 +183,7 @@ export function ReportesPage() {
 
       <div className="panel mb-4 flex items-center justify-between p-4">
         <p className="font-display text-lg font-semibold text-ink-bright">
-          Total: <span className="text-gold">{total.toFixed(2)} €</span>
+          Total: <span className="text-stamp">{total.toFixed(2)} €</span>
         </p>
         <button onClick={exportarPdf} className="btn-primary">
           Exportar PDF
@@ -193,16 +193,16 @@ export function ReportesPage() {
       <div className="panel mb-4 h-72 p-4">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={porMes}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff0f" />
-            <XAxis dataKey="mes" fontSize={12} stroke="#8d8a81" />
-            <YAxis fontSize={12} stroke="#8d8a81" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#ded2b8" />
+            <XAxis dataKey="mes" fontSize={12} stroke="#7a7160" />
+            <YAxis fontSize={12} stroke="#7a7160" />
             <Tooltip
               formatter={(value) => `${Number(value).toFixed(2)} €`}
-              contentStyle={{ background: '#262c34', border: '1px solid #ffffff1a', borderRadius: 8 }}
-              labelStyle={{ color: '#f0ece4' }}
-              itemStyle={{ color: '#c9a84c' }}
+              contentStyle={{ background: '#fbf7ee', border: '1px solid #ded2b8', borderRadius: 8 }}
+              labelStyle={{ color: '#1f1c18' }}
+              itemStyle={{ color: '#a13328' }}
             />
-            <Bar dataKey="total" fill="#c9a84c" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="total" fill="#a13328" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -211,11 +211,11 @@ export function ReportesPage() {
         {filtrados
           .sort((a, b) => b.fecha.localeCompare(a.fecha))
           .map((i) => (
-            <li key={`${i.tipo}-${i.id}`} className="panel flex items-center justify-between p-3 text-sm">
+            <li key={`${i.tipo}-${i.id}`} className="entry flex items-center justify-between p-3 text-sm">
               <span className="text-ink">
                 {i.fecha} · {i.tipo} · {i.categoria}
               </span>
-              <span className="font-medium text-gold">{i.precio.toFixed(2)} €</span>
+              <span className="font-medium text-stamp">{i.precio.toFixed(2)} €</span>
             </li>
           ))}
         {filtrados.length === 0 && <p className="text-sm text-ink-dim">Sin registros en este periodo.</p>}

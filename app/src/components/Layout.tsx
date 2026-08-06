@@ -9,11 +9,11 @@ export function Layout() {
   const { email, logout } = useAuth()
 
   return (
-    <div className="min-h-screen bg-carbon">
-      <header className="border-b border-white/[0.06]">
+    <div className="min-h-screen bg-paper">
+      <header className="border-b border-line">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
           <span className="font-display text-xl font-semibold text-ink-bright">
-            Car<em className="text-gold italic">log</em>
+            Car<em className="text-stamp italic">log</em>
           </span>
           <nav className="flex items-center gap-1">
             <NavLink to="/" end className={linkClass}>

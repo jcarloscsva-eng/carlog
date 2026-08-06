@@ -49,7 +49,7 @@ export function MantenimientosTab({
         <input name="elementos" required placeholder="Elementos abordados" className="input sm:col-span-2" />
         <input name="intervaloKm" type="number" placeholder="Recordar cada X km (opcional)" className="input" />
         <input name="intervaloMeses" type="number" placeholder="Recordar cada X meses (opcional)" className="input" />
-        {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+        {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
         <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
           {submitting ? 'Guardando…' : 'Añadir mantenimiento'}
         </button>
@@ -57,11 +57,11 @@ export function MantenimientosTab({
 
       <ul className="space-y-2">
         {mantenimientos.map((m) => (
-          <li key={m.id} className="panel p-3">
+          <li key={m.id} className="entry p-3">
             <p className="text-sm text-ink">{m.elementos}</p>
             <p className="text-xs text-ink-dim">
               {m.fecha} · {m.km.toLocaleString('es-ES')} km ·{' '}
-              <span className="text-gold">{m.precio.toFixed(2)} €</span> · {m.tienda}
+              <span className="text-stamp">{m.precio.toFixed(2)} €</span> · {m.tienda}
             </p>
           </li>
         ))}

@@ -13,8 +13,8 @@ export default defineConfig({
         name: 'Carlog',
         short_name: 'Carlog',
         description: 'Gestión de mantenimiento de vehículos',
-        theme_color: '#22272e',
-        background_color: '#22272e',
+        theme_color: '#f4eee1',
+        background_color: '#f4eee1',
         display: 'standalone',
         start_url: '/',
         icons: [

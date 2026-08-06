@@ -28,7 +28,7 @@ export function VehiculoDetailPage() {
 
   return (
     <div>
-      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-gold">
+      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-stamp">
         ← Volver a vehículos
       </Link>
 
@@ -40,7 +40,7 @@ export function VehiculoDetailPage() {
       {vehiculo && (
         <p className="mb-6 text-sm text-ink-dim">
           {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-          <span className="text-gold">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+          <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
         </p>
       )}
 
@@ -51,7 +51,7 @@ export function VehiculoDetailPage() {
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-sm font-medium transition ${
               tab === t
-                ? 'border-b-2 border-gold text-gold'
+                ? 'border-b-2 border-stamp text-stamp'
                 : 'text-ink-dim hover:text-ink'
             }`}
           >

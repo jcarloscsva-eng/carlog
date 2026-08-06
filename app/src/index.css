@@ -1,67 +1,76 @@
 @import "tailwindcss";
 
 @theme {
-  --color-carbon: #22272e;
-  --color-carbon-2: #262c34;
-  --color-carbon-3: #2e343d;
-  --color-ink: #d4cfc7;
-  --color-ink-bright: #f0ece4;
-  --color-ink-dim: #8d8a81;
-  --color-gold: #c9a84c;
-  --color-gold-soft: #c9a84c1f;
+  --color-paper: #f4eee1;
+  --color-paper-2: #fbf7ee;
+  --color-line: #ded2b8;
+  --color-ink: #3a352e;
+  --color-ink-bright: #1f1c18;
+  --color-ink-dim: #7a7160;
+  --color-stamp: #a13328;
+  --color-stamp-soft: #a133281a;
 
-  --font-display: "Playfair Display", serif;
-  --font-sans: "Outfit", system-ui, sans-serif;
+  --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--color-carbon);
+  background: var(--color-paper);
   color: var(--color-ink);
 }
 
 @layer components {
   .panel {
-    @apply rounded-2xl border border-white/[0.06] bg-carbon-2;
+    @apply rounded-lg border border-line bg-paper-2;
+  }
+
+  .entry {
+    @apply rounded-md border border-line border-l-[3px] border-l-stamp bg-paper-2;
   }
 
   .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-gold;
+    @apply inline-flex items-center gap-2 text-xs font-medium uppercase tracking-[0.2em] text-stamp;
+    font-family: var(--font-sans);
   }
   .eyebrow::before {
     content: "";
-    @apply h-px w-5 bg-gold/70;
+    @apply h-px w-5 bg-stamp/70;
   }
 
   .heading {
     @apply font-display font-semibold text-ink-bright;
   }
   .heading em {
-    @apply text-gold;
+    @apply text-stamp;
     font-style: italic;
   }
 
   .input {
-    @apply w-full rounded-lg border border-white/10 bg-carbon px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-gold/60 focus:outline-none;
+    @apply w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-stamp focus:outline-none;
+    font-family: var(--font-sans);
   }
 
   .btn-primary {
-    @apply rounded-lg bg-gold px-3 py-2 text-sm font-medium text-carbon transition hover:brightness-110 disabled:opacity-50;
+    @apply rounded-md bg-stamp px-3 py-2 text-sm font-medium text-paper-2 transition hover:brightness-110 disabled:opacity-50;
+    font-family: var(--font-sans);
   }
 
   .btn-ghost {
-    @apply rounded-lg border border-white/10 px-3 py-2 text-sm font-medium text-ink transition hover:border-gold/50 hover:text-gold;
+    @apply rounded-md border border-line px-3 py-2 text-sm font-medium text-ink transition hover:border-stamp hover:text-stamp;
+    font-family: var(--font-sans);
   }
 
   .nav-link {
-    @apply rounded-lg px-3 py-2 text-sm font-medium tracking-wide text-ink-dim transition hover:text-ink;
+    @apply rounded-md px-3 py-2 text-sm font-medium tracking-wide text-ink-dim transition hover:text-ink;
+    font-family: var(--font-sans);
   }
   .nav-link.active {
-    @apply text-gold;
+    @apply text-stamp;
   }
 }
