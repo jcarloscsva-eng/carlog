@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Mantenimiento } from '@shared/types'
 import { api } from '../../lib/api'
 import { Modal } from '../Modal'
+import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
 interface MantenimientoFormValues {
   fecha: string
@@ -204,6 +205,11 @@ export function MantenimientosTab({
   const [editing, setEditing] = useState<Mantenimiento | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [orden, setOrden] = useState<OrdenFecha>('desc')
+
+  const ordenados = [...mantenimientos].sort((a, b) =>
+    orden === 'desc' ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha),
+  )
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -268,8 +274,12 @@ export function MantenimientosTab({
         />
       </div>
 
+      {mantenimientos.length > 0 && (
+        <OrdenFechaButton orden={orden} onToggle={() => setOrden((o) => (o === 'desc' ? 'asc' : 'desc'))} />
+      )}
+
       <ul className="space-y-2">
-        {mantenimientos.map((m) => (
+        {ordenados.map((m) => (
           <li key={m.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{m.elementos}</p>

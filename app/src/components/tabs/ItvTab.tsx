@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Itv, ItvResultado } from '@shared/types'
 import { api } from '../../lib/api'
 import { Modal } from '../Modal'
+import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
 interface ItvFormValues {
   fechaRealizada: string
@@ -63,6 +64,7 @@ export function ItvTab({
   const [editing, setEditing] = useState<Itv | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [orden, setOrden] = useState<OrdenFecha>('desc')
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -111,7 +113,11 @@ export function ItvTab({
     reload()
   }
 
-  const ordenadas = [...itvs].sort((a, b) => b.fechaRealizada.localeCompare(a.fechaRealizada))
+  const ordenadas = [...itvs].sort((a, b) =>
+    orden === 'desc'
+      ? b.fechaRealizada.localeCompare(a.fechaRealizada)
+      : a.fechaRealizada.localeCompare(b.fechaRealizada),
+  )
 
   return (
     <div>
@@ -123,6 +129,10 @@ export function ItvTab({
           onSubmit={handleSubmit}
         />
       </div>
+
+      {itvs.length > 0 && (
+        <OrdenFechaButton orden={orden} onToggle={() => setOrden((o) => (o === 'desc' ? 'asc' : 'desc'))} />
+      )}
 
       <ul className="space-y-2">
         {ordenadas.map((i) => (

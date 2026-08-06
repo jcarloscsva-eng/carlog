@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Repuesto, TipoRepuesto } from '@shared/types'
 import { api } from '../../lib/api'
 import { Modal } from '../Modal'
+import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
 const TIPOS: TipoRepuesto[] = [
   'Neumáticos',
@@ -132,6 +133,11 @@ export function RepuestosTab({
   const [editing, setEditing] = useState<Repuesto | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [orden, setOrden] = useState<OrdenFecha>('desc')
+
+  const ordenados = [...repuestos].sort((a, b) =>
+    orden === 'desc' ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha),
+  )
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -184,8 +190,12 @@ export function RepuestosTab({
         />
       </div>
 
+      {repuestos.length > 0 && (
+        <OrdenFechaButton orden={orden} onToggle={() => setOrden((o) => (o === 'desc' ? 'asc' : 'desc'))} />
+      )}
+
       <ul className="space-y-2">
-        {repuestos.map((r) => (
+        {ordenados.map((r) => (
           <li key={r.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{r.tipoRepuesto}</p>
