@@ -32,38 +32,49 @@ function MantenimientoForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-2 sm:grid-cols-3">
-      <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input" />
-      <input
-        name="km"
-        type="number"
-        required
-        placeholder="Km"
-        defaultValue={initialValues?.km}
-        className="input"
-      />
-      <input
-        name="precio"
-        type="number"
-        step="0.01"
-        required
-        placeholder="Precio (€)"
-        defaultValue={initialValues?.precio}
-        className="input"
-      />
-      <input
-        name="tienda"
-        required
-        placeholder="Tienda / taller"
-        defaultValue={initialValues?.tienda}
-        className="input"
-      />
-      <input
-        name="elementos"
-        required
-        placeholder="Elementos abordados"
-        defaultValue={initialValues?.elementos}
-        className="input sm:col-span-2"
-      />
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Fecha</label>
+        <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input w-full" />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Km</label>
+        <input
+          name="km"
+          type="number"
+          required
+          defaultValue={initialValues?.km}
+          className="input w-full"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Precio (€)</label>
+        <input
+          name="precio"
+          type="number"
+          step="0.01"
+          required
+          defaultValue={initialValues?.precio}
+          className="input w-full"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Tienda / taller</label>
+        <input
+          name="tienda"
+          required
+          defaultValue={initialValues?.tienda}
+          className="input w-full"
+        />
+      </div>
+      <div className="sm:col-span-2">
+        <label className="mb-1 block text-xs text-ink-dim">Elementos abordados</label>
+        <input
+          name="elementos"
+          required
+          defaultValue={initialValues?.elementos}
+          className="input w-full"
+        />
+      </div>
 
       <label className="flex items-center gap-2 text-sm text-ink sm:col-span-3">
         <input

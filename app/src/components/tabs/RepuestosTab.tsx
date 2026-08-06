@@ -49,40 +49,54 @@ function RepuestoForm({
           </option>
         ))}
       </select>
-      <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input" />
-      <input
-        name="km"
-        type="number"
-        required
-        placeholder="Km"
-        defaultValue={initialValues?.km}
-        className="input"
-      />
-      <input
-        name="precio"
-        type="number"
-        step="0.01"
-        required
-        placeholder="Precio (€)"
-        defaultValue={initialValues?.precio}
-        className="input"
-      />
-      <input name="tienda" required placeholder="Tienda" defaultValue={initialValues?.tienda} className="input" />
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Fecha</label>
+        <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input w-full" />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Km</label>
+        <input
+          name="km"
+          type="number"
+          required
+          defaultValue={initialValues?.km}
+          className="input w-full"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Precio (€)</label>
+        <input
+          name="precio"
+          type="number"
+          step="0.01"
+          required
+          defaultValue={initialValues?.precio}
+          className="input w-full"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Tienda</label>
+        <input name="tienda" required defaultValue={initialValues?.tienda} className="input w-full" />
+      </div>
       <div />
-      <input
-        name="vidaUtilKm"
-        type="number"
-        placeholder="Vida útil en km (opcional)"
-        defaultValue={initialValues?.vidaUtilKm}
-        className="input"
-      />
-      <input
-        name="vidaUtilAnios"
-        type="number"
-        placeholder="Vida útil en años (opcional)"
-        defaultValue={initialValues?.vidaUtilAnios}
-        className="input"
-      />
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Vida útil en km (opcional)</label>
+        <input
+          name="vidaUtilKm"
+          type="number"
+          defaultValue={initialValues?.vidaUtilKm}
+          className="input w-full"
+        />
+      </div>
+      <div>
+        <label className="mb-1 block text-xs text-ink-dim">Vida útil en años (opcional)</label>
+        <input
+          name="vidaUtilAnios"
+          type="number"
+          defaultValue={initialValues?.vidaUtilAnios}
+          className="input w-full"
+        />
+      </div>
       {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
