@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
@@ -7,6 +7,7 @@ import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
 import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { Modal } from '../components/Modal'
+import { calcularProximasTareas } from '@shared/alerts'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV'] as const
@@ -33,6 +34,17 @@ export function VehiculoDetailPage() {
   const [editing, setEditing] = useState(false)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+
+  const misMantenimientos = useMemo(
+    () => mantenimientos.filter((m) => m.vehiculoId === matricula),
+    [mantenimientos, matricula],
+  )
+  const misItvs = useMemo(() => itvs.filter((i) => i.vehiculoId === matricula), [itvs, matricula])
+
+  const proximasTareas = useMemo(
+    () => (vehiculo ? calcularProximasTareas(new Date(), vehiculo, misMantenimientos, misItvs) : []),
+    [vehiculo, misMantenimientos, misItvs],
+  )
 
   async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -81,6 +93,31 @@ export function VehiculoDetailPage() {
         </div>
       )}
 
+      {vehiculo && (
+        <div className="mb-6">
+          <span className="eyebrow">Próximas tareas</span>
+          <ul className="mt-2 space-y-2">
+            {proximasTareas.map((t) => (
+              <li key={`${t.tipo}-${t.titulo}`} className="entry flex items-center justify-between p-3">
+                <span className="text-sm text-ink">
+                  {t.tipo === 'ITV' ? 'ITV' : t.titulo}
+                </span>
+                <span className={`text-xs ${t.urgente ? 'font-medium text-amber-700' : 'text-ink-dim'}`}>
+                  {t.fechaObjetivo && t.fechaObjetivo.toLocaleDateString('es-ES')}
+                  {t.fechaObjetivo && t.kmObjetivo ? ' · ' : ''}
+                  {t.kmObjetivo && `${t.kmObjetivo.toLocaleString('es-ES')} km`}
+                </span>
+              </li>
+            ))}
+          </ul>
+          {proximasTareas.length <= 1 && (
+            <p className="mt-2 text-xs text-ink-dim">
+              Añade un intervalo (km o meses) a un mantenimiento para que también aparezca aquí.
+            </p>
+          )}
+        </div>
+      )}
+
       <div className="mb-6 flex gap-1 border-b border-line">
         {TABS.map((t) => (
           <button
@@ -109,7 +146,7 @@ export function VehiculoDetailPage() {
       {tab === 'Mantenimientos' && (
         <MantenimientosTab
           vehiculoId={matricula}
-          mantenimientos={mantenimientos.filter((m) => m.vehiculoId === matricula)}
+          mantenimientos={misMantenimientos}
           reload={reloadMantenimientos}
         />
       )}
@@ -121,11 +158,7 @@ export function VehiculoDetailPage() {
         />
       )}
       {tab === 'ITV' && (
-        <ItvTab
-          vehiculoId={matricula}
-          itvs={itvs.filter((i) => i.vehiculoId === matricula)}
-          reload={reloadItv}
-        />
+        <ItvTab vehiculoId={matricula} itvs={misItvs} reload={reloadItv} />
       )}
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Editar vehículo">

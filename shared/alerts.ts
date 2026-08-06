@@ -102,3 +102,62 @@ function addMeses(fecha: Date, meses: number): Date {
   resultado.setMonth(resultado.getMonth() + meses)
   return resultado
 }
+
+export interface ProximaTarea {
+  tipo: 'Mantenimiento' | 'ITV'
+  titulo: string
+  fechaObjetivo?: Date
+  kmObjetivo?: number
+  urgente: boolean
+}
+
+/**
+ * Próximas tareas (mantenimiento e ITV) de un único vehículo, para
+ * mostrar en su ficha — mismo cálculo que `calcularAlertasPendientes`,
+ * pero sin filtrar por "está a punto de vencer": aquí se devuelven todas,
+ * marcando `urgente` cuando entran en la ventana de aviso (30 días o
+ * 1.000 km).
+ */
+export function calcularProximasTareas(
+  hoy: Date,
+  vehiculo: Vehiculo,
+  mantenimientos: Mantenimiento[],
+  itvs: Itv[],
+): ProximaTarea[] {
+  const kmActual = vehiculo.kmActual
+  const tareas: ProximaTarea[] = []
+
+  const ultimoPorTipo = new Map<string, Mantenimiento>()
+  for (const m of mantenimientos) {
+    if (!m.intervaloKm && !m.intervaloMeses) continue
+    const existente = ultimoPorTipo.get(m.elementos)
+    if (!existente || new Date(m.fecha) > new Date(existente.fecha)) {
+      ultimoPorTipo.set(m.elementos, m)
+    }
+  }
+  for (const m of ultimoPorTipo.values()) {
+    const fechaObjetivo = m.intervaloMeses ? addMeses(new Date(m.fecha), m.intervaloMeses) : undefined
+    const kmObjetivo = m.intervaloKm ? m.km + m.intervaloKm : undefined
+    tareas.push({
+      tipo: 'Mantenimiento',
+      titulo: m.elementos,
+      fechaObjetivo,
+      kmObjetivo,
+      urgente: estaProxima(hoy, kmActual, fechaObjetivo, kmObjetivo),
+    })
+  }
+
+  const ultimaItv = [...itvs].sort((a, b) => b.fechaRealizada.localeCompare(a.fechaRealizada))[0]
+  const fechaProximaItv = ultimaItv ? new Date(ultimaItv.fechaProxima) : calcularProximaItv(vehiculo)
+  tareas.push({
+    tipo: 'ITV',
+    titulo: 'ITV',
+    fechaObjetivo: fechaProximaItv,
+    urgente: estaProxima(hoy, kmActual, fechaProximaItv, undefined),
+  })
+
+  return tareas.sort((a, b) => {
+    if (!a.fechaObjetivo || !b.fechaObjetivo) return 0
+    return a.fechaObjetivo.getTime() - b.fechaObjetivo.getTime()
+  })
+}
