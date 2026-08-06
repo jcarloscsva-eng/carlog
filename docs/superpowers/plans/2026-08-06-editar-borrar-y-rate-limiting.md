@@ -66,7 +66,7 @@ export function Modal({
           <h2 className="font-display text-lg font-semibold text-ink-bright">{title}</h2>
           <button
             onClick={onClose}
-            className="text-ink-dim hover:text-gold"
+            className="text-ink-dim hover:text-stamp"
             aria-label="Cerrar"
           >
             ✕
@@ -294,7 +294,7 @@ En el `<div className="flex shrink-0 gap-2">` de cada fila, tras el botón de "M
               className="input"
               rows={3}
             />
-            {editError && <p className="text-sm text-red-400">{editError}</p>}
+            {editError && <p className="text-sm text-red-700">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>
@@ -407,7 +407,7 @@ function MantenimientoForm({
         defaultValue={initialValues?.intervaloMeses}
         className="input"
       />
-      {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+      {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
       </button>
@@ -495,12 +495,12 @@ export function MantenimientosTab({
 
       <ul className="space-y-2">
         {mantenimientos.map((m) => (
-          <li key={m.id} className="panel flex items-start justify-between gap-3 p-3">
+          <li key={m.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{m.elementos}</p>
               <p className="text-xs text-ink-dim">
                 {m.fecha} · {m.km.toLocaleString('es-ES')} km ·{' '}
-                <span className="text-gold">{m.precio.toFixed(2)} €</span> · {m.tienda}
+                <span className="text-stamp">{m.precio.toFixed(2)} €</span> · {m.tienda}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
@@ -651,7 +651,7 @@ function RepuestoForm({
         defaultValue={initialValues?.vidaUtilAnios}
         className="input"
       />
-      {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+      {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
       </button>
@@ -739,12 +739,12 @@ export function RepuestosTab({
 
       <ul className="space-y-2">
         {repuestos.map((r) => (
-          <li key={r.id} className="panel flex items-start justify-between gap-3 p-3">
+          <li key={r.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{r.tipoRepuesto}</p>
               <p className="text-xs text-ink-dim">
                 {r.fecha} · {r.km.toLocaleString('es-ES')} km ·{' '}
-                <span className="text-gold">{r.precio.toFixed(2)} €</span> · {r.tienda}
+                <span className="text-stamp">{r.precio.toFixed(2)} €</span> · {r.tienda}
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
@@ -856,7 +856,7 @@ function ItvForm({
         <option value="Desfavorable">Desfavorable</option>
         <option value="Negativo">Negativo</option>
       </select>
-      {error && <p className="text-sm text-red-400 sm:col-span-3">{error}</p>}
+      {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
       </button>
@@ -941,14 +941,14 @@ export function ItvTab({
 
       <ul className="space-y-2">
         {ordenadas.map((i) => (
-          <li key={i.id} className="panel flex items-start justify-between gap-3 p-3">
+          <li key={i.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">
                 Resultado: <span className="font-medium text-ink-bright">{i.resultado}</span>
               </p>
               <p className="text-xs text-ink-dim">
                 Realizada el {i.fechaRealizada} · Próxima el{' '}
-                <span className="font-medium text-gold">
+                <span className="font-medium text-stamp">
                   {new Date(i.fechaProxima).toLocaleDateString('es-ES')}
                 </span>
               </p>
@@ -1098,7 +1098,7 @@ export function VehiculoDetailPage() {
 
   return (
     <div>
-      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-gold">
+      <Link to="/" className="mb-3 inline-block text-sm text-ink-dim hover:text-stamp">
         ← Volver a vehículos
       </Link>
 
@@ -1110,7 +1110,7 @@ export function VehiculoDetailPage() {
             </h1>
             <p className="text-sm text-ink-dim">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-              <span className="text-gold">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+              <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
             </p>
           </div>
           <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
@@ -1119,14 +1119,14 @@ export function VehiculoDetailPage() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-1 border-b border-white/[0.06]">
+      <div className="mb-6 flex gap-1 border-b border-line">
         {TABS.map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-sm font-medium transition ${
               tab === t
-                ? 'border-b-2 border-gold text-gold'
+                ? 'border-b-2 border-stamp text-stamp'
                 : 'text-ink-dim hover:text-ink'
             }`}
           >
@@ -1199,7 +1199,7 @@ export function VehiculoDetailPage() {
               placeholder="Km actual"
               className="input"
             />
-            {editError && <p className="text-sm text-red-400 sm:col-span-2">{editError}</p>}
+            {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>
