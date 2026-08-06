@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Averia } from '@shared/types'
 import { api } from '../../lib/api'
+import { Modal } from '../Modal'
 
 export function AveriasTab({
   vehiculoId,
@@ -13,6 +14,9 @@ export function AveriasTab({
 }) {
   const [descripcion, setDescripcion] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [editing, setEditing] = useState<Averia | null>(null)
+  const [editSubmitting, setEditSubmitting] = useState(false)
+  const [editError, setEditError] = useState<string | null>(null)
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -33,6 +37,32 @@ export function AveriasTab({
 
   async function marcarResuelta(a: Averia) {
     await api.averias.update(a.id, { estado: a.estado === 'Pendiente' ? 'Resuelta' : 'Pendiente' })
+    reload()
+  }
+
+  async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!editing) return
+    const form = new FormData(e.currentTarget)
+    setEditSubmitting(true)
+    setEditError(null)
+    try {
+      await api.averias.update(editing.id, {
+        fecha: String(form.get('fecha')),
+        descripcion: String(form.get('descripcion')),
+      })
+      setEditing(null)
+      reload()
+    } catch (err) {
+      setEditError((err as Error).message)
+    } finally {
+      setEditSubmitting(false)
+    }
+  }
+
+  async function handleDelete(a: Averia) {
+    if (!confirm('¿Borrar esta avería?')) return
+    await api.averias.remove(a.id)
     reload()
   }
 
@@ -76,11 +106,36 @@ export function AveriasTab({
               <button onClick={() => marcarResuelta(a)} className="btn-ghost px-2 py-1 text-xs">
                 {a.estado === 'Pendiente' ? 'Marcar resuelta' : 'Reabrir'}
               </button>
+              <button onClick={() => setEditing(a)} className="btn-ghost px-2 py-1 text-xs">
+                Editar
+              </button>
+              <button onClick={() => handleDelete(a)} className="btn-ghost px-2 py-1 text-xs">
+                Eliminar
+              </button>
             </div>
           </li>
         ))}
         {averias.length === 0 && <p className="text-sm text-ink-dim">Sin averías registradas.</p>}
       </ul>
+
+      <Modal open={editing !== null} onClose={() => setEditing(null)} title="Editar avería">
+        {editing && (
+          <form onSubmit={handleEditSubmit} className="grid gap-2">
+            <input name="fecha" type="date" required defaultValue={editing.fecha} className="input" />
+            <textarea
+              name="descripcion"
+              required
+              defaultValue={editing.descripcion}
+              className="input"
+              rows={3}
+            />
+            {editError && <p className="text-sm text-red-700">{editError}</p>}
+            <button type="submit" disabled={editSubmitting} className="btn-primary">
+              {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
+            </button>
+          </form>
+        )}
+      </Modal>
     </div>
   )
 }
