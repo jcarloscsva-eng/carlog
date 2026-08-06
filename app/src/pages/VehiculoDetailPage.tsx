@@ -100,6 +100,8 @@ export function VehiculoDetailPage() {
       {tab === 'Averías' && (
         <AveriasTab
           vehiculoId={matricula}
+          marca={vehiculo?.marca ?? ''}
+          modelo={vehiculo?.modelo ?? ''}
           averias={averias.filter((a) => a.vehiculoId === matricula)}
           reload={reloadAverias}
         />

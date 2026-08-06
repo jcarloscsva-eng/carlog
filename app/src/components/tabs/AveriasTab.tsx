@@ -5,10 +5,14 @@ import { Modal } from '../Modal'
 
 export function AveriasTab({
   vehiculoId,
+  marca,
+  modelo,
   averias,
   reload,
 }: {
   vehiculoId: string
+  marca: string
+  modelo: string
   averias: Averia[]
   reload: () => void
 }) {
@@ -96,7 +100,7 @@ export function AveriasTab({
             </div>
             <div className="flex shrink-0 gap-2">
               <a
-                href={`https://www.google.com/search?q=${encodeURIComponent(a.descripcion)}`}
+                href={`https://www.google.com/search?q=${encodeURIComponent(`${marca} ${modelo} ${a.descripcion}`)}`}
                 target="_blank"
                 rel="noreferrer"
                 className="btn-ghost px-2 py-1 text-xs"
