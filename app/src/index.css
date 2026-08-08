@@ -268,6 +268,12 @@ input[type='checkbox'] {
   .input {
     @apply w-full rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-dim focus:border-stamp focus:outline-none;
     font-family: var(--font-sans);
+    /* Los formularios usan grid de una sola columna en móvil. Sin esto, el
+       ancho mínimo por defecto de un grid item es el de su contenido — y
+       en iOS Safari, un <input type="date"> tiene un contenido intrínseco
+       bastante ancho, así que empuja el formulario (y la página entera)
+       fuera del viewport en vez de encogerse al 100% real del contenedor. */
+    min-width: 0;
   }
 
   .btn-primary {
