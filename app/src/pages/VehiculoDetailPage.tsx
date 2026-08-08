@@ -9,9 +9,11 @@ import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
+import { SaludBadge } from '../components/SaludBadge'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
+import { calcularSaludVehiculo } from '@shared/salud'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
@@ -77,6 +79,17 @@ export function VehiculoDetailPage() {
     [vehiculo, misMantenimientos, misItvs],
   )
 
+  const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
+  const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
+
+  const salud = useMemo(
+    () =>
+      vehiculo
+        ? calcularSaludVehiculo(new Date(), vehiculo, misAverias, misMantenimientos, misItvs, misSeguros)
+        : null,
+    [vehiculo, misAverias, misMantenimientos, misItvs, misSeguros],
+  )
+
   async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!vehiculo) return
@@ -120,9 +133,12 @@ export function VehiculoDetailPage() {
             />
           </svg>
           <div className="relative">
-            <h1 className="font-display mb-1 text-2xl font-semibold">
-              {vehiculo.marca} {vehiculo.modelo}
-            </h1>
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <h1 className="font-display text-2xl font-semibold">
+                {vehiculo.marca} {vehiculo.modelo}
+              </h1>
+              {salud && <SaludBadge salud={salud} dark />}
+            </div>
             <p className="text-sm text-[#b6a98f]">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
               <span className="font-medium text-[#e2624f]">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
