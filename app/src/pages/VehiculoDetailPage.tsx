@@ -282,7 +282,7 @@ export function VehiculoDetailPage() {
               placeholder="Km actual"
               className="input"
             />
-            <div className="sm:col-span-2">
+            <div className="min-w-0 sm:col-span-2">
               <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
               <input
                 name="fechaCompra"

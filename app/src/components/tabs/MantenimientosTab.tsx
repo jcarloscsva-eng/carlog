@@ -75,7 +75,7 @@ function MantenimientoForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-2 sm:grid-cols-3">
-      <div>
+      <div className="min-w-0">
         <label className="mb-1 block text-xs text-ink-dim">Fecha</label>
         <input name="fecha" type="date" required defaultValue={initialValues?.fecha} className="input w-full" />
       </div>

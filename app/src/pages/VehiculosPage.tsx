@@ -253,7 +253,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => v
         ))}
       </select>
       <input name="kmActual" required type="number" placeholder="Km actual" className="input" />
-      <div>
+      <div className="min-w-0">
         <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
         <input name="fechaCompra" type="date" className="input w-full" />
       </div>

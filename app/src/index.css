@@ -60,6 +60,24 @@ input[type='checkbox'] {
   flex-shrink: 0;
 }
 
+/* iOS Safari le da a <input type="date"> un ancho intrínseco grande (el
+   del widget nativo con su formato de fecha completo) y no lo encoge al
+   100% del contenedor como hace el resto de navegadores: el campo se
+   sale por la derecha del formulario. Con appearance:none se renderiza
+   como un campo normal, y max-width lo ata al ancho disponible pase lo
+   que pase. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  max-width: 100%;
+}
+/* Sin esto iOS centra el valor dentro del campo y reserva de más. */
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+  min-width: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
