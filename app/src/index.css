@@ -50,6 +50,16 @@ body {
   color: var(--color-ink);
 }
 
+/* Sin esto, Safari/iOS renderiza los checkboxes con su estilo nativo
+   (grandes, azules), muy fuera de tono con el resto de la app — en
+   desktop pasa casi desapercibido pero en iOS es muy visible. */
+input[type='checkbox'] {
+  accent-color: var(--color-stamp);
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.001ms !important;
