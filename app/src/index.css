@@ -195,6 +195,40 @@ body {
   }
 }
 
+/* ---- Resumen oscuro: mismo lenguaje visual del login (fondo oscuro
+   fijo, no depende del tema claro/oscuro del resto de la app) aplicado
+   como acento puntual en el Home y en la cabecera de la ficha de
+   vehículo, en vez de en toda la pantalla. ---- */
+.dark-hero {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  background: radial-gradient(circle at 15% 0%, #2e2618 0%, #241e17 65%);
+  color: #f4eee1;
+}
+.dark-hero-ghost {
+  position: absolute;
+  top: -1.5rem;
+  right: -1.5rem;
+  width: 8rem;
+  height: 8rem;
+  opacity: 0.08;
+  pointer-events: none;
+}
+.dark-hero-chip .v {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #e2624f;
+  line-height: 1;
+}
+.dark-hero-chip .l {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #b6a98f;
+  margin-top: 0.15rem;
+}
+
 @layer components {
   .panel {
     @apply rounded-lg border border-line bg-paper-2;
