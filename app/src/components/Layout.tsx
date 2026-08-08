@@ -1,9 +1,10 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { NotificationsButton } from './NotificationsButton'
 import { useAuth } from './AuthGate'
+import { IconGarage, IconReportes, IconUsers } from './Icons'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
-  `nav-link ${isActive ? 'active' : ''}`
+  `nav-link flex items-center gap-1.5 ${isActive ? 'active' : ''}`
 
 export function Layout() {
   const { email, isAdmin, logout, showKmReminder, dismissKmReminder } = useAuth()
@@ -16,15 +17,18 @@ export function Layout() {
             Car<em className="text-stamp italic">log</em>
           </span>
           <nav className="flex items-center gap-1">
-            <NavLink to="/" end className={linkClass}>
-              Vehículos
+            <NavLink to="/" end className={linkClass} aria-label="Vehículos">
+              <IconGarage className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Vehículos</span>
             </NavLink>
-            <NavLink to="/reportes" className={linkClass}>
-              Reportes
+            <NavLink to="/reportes" className={linkClass} aria-label="Reportes">
+              <IconReportes className="h-4 w-4" aria-hidden="true" />
+              <span className="hidden sm:inline">Reportes</span>
             </NavLink>
             {isAdmin && (
-              <NavLink to="/usuarios" className={linkClass}>
-                Usuarios
+              <NavLink to="/usuarios" className={linkClass} aria-label="Usuarios">
+                <IconUsers className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">Usuarios</span>
               </NavLink>
             )}
             <NotificationsButton />

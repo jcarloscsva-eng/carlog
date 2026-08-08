@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Repuesto, TipoRepuesto } from '@shared/types'
 import { api } from '../../lib/api'
+import { IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -205,11 +206,11 @@ export function RepuestosTab({
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <button onClick={() => setEditing(r)} className="btn-ghost px-2 py-1 text-xs">
-                Editar
+              <button onClick={() => setEditing(r)} className="icon-btn" aria-label="Editar repuesto" title="Editar">
+                <IconEdit className="h-4 w-4" />
               </button>
-              <button onClick={() => handleDelete(r)} className="btn-ghost px-2 py-1 text-xs">
-                Eliminar
+              <button onClick={() => handleDelete(r)} className="icon-btn" aria-label="Eliminar repuesto" title="Eliminar">
+                <IconTrash className="h-4 w-4" />
               </button>
             </div>
           </li>

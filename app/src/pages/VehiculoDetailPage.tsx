@@ -8,12 +8,21 @@ import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
 import { Modal } from '../components/Modal'
+import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
 type Tab = (typeof TABS)[number]
+
+const TAB_ICONS: Record<Tab, typeof IconAveria> = {
+  Averías: IconAveria,
+  Mantenimientos: IconMantenimiento,
+  Repuestos: IconRepuesto,
+  ITV: IconItv,
+  Seguro: IconSeguro,
+}
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
 
@@ -129,20 +138,24 @@ export function VehiculoDetailPage() {
         </div>
       )}
 
-      <div className="mb-6 flex gap-1 border-b border-line">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-sm font-medium transition ${
-              tab === t
-                ? 'border-b-2 border-stamp text-stamp'
-                : 'text-ink-dim hover:text-ink'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
+      <div className="mb-6 flex gap-1 overflow-x-auto border-b border-line">
+        {TABS.map((t) => {
+          const Icon = TAB_ICONS[t]
+          return (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`flex shrink-0 items-center gap-1.5 px-3 py-2 text-sm font-medium whitespace-nowrap transition ${
+                tab === t
+                  ? 'border-b-2 border-stamp text-stamp'
+                  : 'text-ink-dim hover:text-ink'
+              }`}
+            >
+              <Icon className="h-4 w-4" aria-hidden="true" />
+              {t}
+            </button>
+          )
+        })}
       </div>
 
       {tab === 'Averías' && (

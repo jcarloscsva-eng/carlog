@@ -118,6 +118,17 @@ export function IconBell(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+export function IconUsers(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <circle cx="9" cy="8.5" r="3.2" />
+      <path d="M3.2 20c0-3.5 2.6-6 5.8-6s5.8 2.5 5.8 6" />
+      <path d="M15.5 6.2a3.2 3.2 0 0 1 0 6.3" />
+      <path d="M17.4 14.3c2.6.4 4.4 2.4 4.4 5.7" />
+    </Icon>
+  )
+}
+
 export function IconGarage(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>
