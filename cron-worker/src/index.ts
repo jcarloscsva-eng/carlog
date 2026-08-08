@@ -1,4 +1,5 @@
-import { airtableCreate, airtableList, type AirtableEnv } from '../../shared/airtable'
+import { WebPushError } from 'web-push'
+import { airtableCreate, airtableDelete, airtableList, type AirtableEnv } from '../../shared/airtable'
 import {
   TABLES,
   alertaEnviadaToAirtable,
@@ -14,6 +15,8 @@ import type { Itv, Mantenimiento, Repuesto, Vehiculo } from '../../shared/types'
 
 export interface Env extends AirtableEnv, NotificationsEnv {
   APP_URL: string
+  /** Token para poder disparar /__run manualmente (ver más abajo). Sin él, la ruta queda deshabilitada. */
+  CRON_DEBUG_TOKEN?: string
 }
 
 function ultimosPorVehiculoConIntervalo(mantenimientos: Mantenimiento[]): Map<string, Mantenimiento[]> {
@@ -109,9 +112,17 @@ async function ejecutarRevisionDeAlertas(env: Env): Promise<void> {
 
     await Promise.all(
       suscripcionesDelUsuario.map((s) =>
-        sendWebPush(env, s, alerta.titulo, alerta.detalle).catch((err) =>
-          console.error('Error enviando push de alerta', err),
-        ),
+        sendWebPush(env, s, alerta.titulo, alerta.detalle).catch(async (err) => {
+          console.error('Error enviando push de alerta', err)
+          // 404/410 = el endpoint ya no existe (dispositivo desinstalado o
+          // permiso revocado): borramos la suscripción para no seguir
+          // reintentando contra un destino muerto en cada revisión diaria.
+          if (err instanceof WebPushError && (err.statusCode === 404 || err.statusCode === 410)) {
+            await airtableDelete(env, TABLES.PushSubscriptions, s.id).catch((delErr) =>
+              console.error('Error borrando suscripción caducada', delErr),
+            )
+          }
+        }),
       ),
     )
 
@@ -128,10 +139,17 @@ export default {
     ctx.waitUntil(ejecutarRevisionDeAlertas(env))
   },
 
-  // Permite disparar la revisión manualmente en local con `wrangler dev` (GET /__run).
+  // Permite disparar la revisión manualmente con `GET /__run?token=...`.
+  // Sin CRON_DEBUG_TOKEN configurado, la ruta queda deshabilitada — el
+  // worker responde en una URL pública y sin este freno cualquiera podría
+  // forzar revisiones repetidas (gasto innecesario de Airtable/Resend/push,
+  // y una ventana para envíos duplicados si coincide con el cron real).
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url)
     if (url.pathname === '/__run') {
+      if (!env.CRON_DEBUG_TOKEN || url.searchParams.get('token') !== env.CRON_DEBUG_TOKEN) {
+        return new Response('Not found', { status: 404 })
+      }
       await ejecutarRevisionDeAlertas(env)
       return new Response('OK')
     }

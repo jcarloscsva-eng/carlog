@@ -182,8 +182,10 @@ npm run dev:app             # :5173
 
 # Cron worker (alertas) en local:
 cp .env.example cron-worker/.dev.vars
+# añade además CRON_DEBUG_TOKEN=cualquier-cadena a cron-worker/.dev.vars
 npm run dev:cron
-# dispara la revisión manualmente: curl http://localhost:8787/__run
+# dispara la revisión manualmente:
+curl "http://localhost:8787/__run?token=cualquier-cadena"
 ```
 
 El login funciona igual en local que en producción: pide tu email, te manda
@@ -216,7 +218,11 @@ wrangler secret put APP_URL
 npm run deploy:cron
 ```
 
-El cron se ejecuta cada día a las 08:00 UTC (`cron-worker/wrangler.toml`).
+El cron se ejecuta cada día a las 08:00 UTC (`cron-worker/wrangler.toml`). El
+worker tiene una URL pública además del cron programado; la ruta
+`/__run` (para forzar una revisión manual) está deshabilitada salvo que
+configures el secret `CRON_DEBUG_TOKEN` — no lo definas en producción a
+menos que necesites depurar algo puntualmente.
 
 ## Notas
 
