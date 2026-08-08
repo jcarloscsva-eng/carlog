@@ -2,7 +2,9 @@ import type {
   Averia,
   Itv,
   Mantenimiento,
+  Parte,
   Repuesto,
+  Seguro,
   Vehiculo,
 } from '@shared/types'
 
@@ -78,6 +80,22 @@ export const api = {
     update: (id: string, data: Partial<Pick<Itv, 'fechaRealizada' | 'resultado'>>) =>
       request<Itv>(`/itv/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/itv/${id}`, { method: 'DELETE' }),
+  },
+  seguros: {
+    list: () => request<Seguro[]>('/seguros'),
+    create: (data: Omit<Seguro, 'id'>) =>
+      request<Seguro>('/seguros', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Omit<Seguro, 'id'>>) =>
+      request<Seguro>(`/seguros/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remove: (id: string) => request<{ ok: true }>(`/seguros/${id}`, { method: 'DELETE' }),
+  },
+  partes: {
+    list: () => request<Parte[]>('/partes'),
+    create: (data: Omit<Parte, 'id'>) =>
+      request<Parte>('/partes', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Omit<Parte, 'id'>>) =>
+      request<Parte>(`/partes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remove: (id: string) => request<{ ok: true }>(`/partes/${id}`, { method: 'DELETE' }),
   },
   pushSubscribe: (subscription: PushSubscriptionJSON) =>
     request<{ ok: true }>('/push-subscribe', {

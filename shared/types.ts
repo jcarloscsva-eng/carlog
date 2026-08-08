@@ -74,6 +74,45 @@ export interface Itv {
   fechaProxima: string
 }
 
+export type SeguroTipoCobertura = 'Terceros' | 'Terceros Ampliado' | 'Todo Riesgo'
+
+export interface Seguro {
+  id: string
+  vehiculoId: string
+  compania: string
+  numeroPoliza: string
+  tipoCobertura: SeguroTipoCobertura
+  fechaInicio: string
+  fechaRenovacion: string
+  precio: number
+  /** Teléfono de asistencia en carretera, si lo da la aseguradora. */
+  telefonoAsistencia?: string
+}
+
+export type ParteTipo =
+  | 'Colisión'
+  | 'Robo'
+  | 'Vandalismo'
+  | 'Lunas'
+  | 'Incendio'
+  | 'Fenómenos atmosféricos'
+  | 'Otro'
+
+export type ParteEstado = 'Abierto' | 'En trámite' | 'Cerrado'
+
+export interface Parte {
+  id: string
+  vehiculoId: string
+  fecha: string
+  tipo: ParteTipo
+  descripcion: string
+  /** Número de expediente que da la aseguradora, si ya se conoce. */
+  numeroParte?: string
+  estado: ParteEstado
+  coste?: number
+  terceroImplicado: boolean
+}
+
 export interface PushSubscriptionRecord {
   id: string
   email: string

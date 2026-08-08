@@ -76,6 +76,30 @@ son los que usa el código):
 | Resultado | Single select: `Favorable`, `Desfavorable`, `Negativo` |
 | Fecha_Proxima | Date (la calcula la app al crear el registro) |
 
+**Seguros**
+| Campo | Tipo |
+|---|---|
+| Vehiculo | Single line text (matrícula) |
+| Compania | Single line text |
+| Numero_Poliza | Single line text |
+| Tipo_Cobertura | Single select: `Terceros`, `Terceros Ampliado`, `Todo Riesgo` |
+| Fecha_Inicio | Date |
+| Fecha_Renovacion | Date |
+| Precio | Number (decimal) |
+| Telefono_Asistencia | Single line text (opcional) |
+
+**Partes**
+| Campo | Tipo |
+|---|---|
+| Vehiculo | Single line text (matrícula) |
+| Fecha | Date |
+| Tipo | Single select: `Colisión`, `Robo`, `Vandalismo`, `Lunas`, `Incendio`, `Fenómenos atmosféricos`, `Otro` |
+| Descripcion | Long text |
+| Numero_Parte | Single line text (opcional) |
+| Estado | Single select: `Abierto`, `En trámite`, `Cerrado` |
+| Coste | Number (decimal, opcional) |
+| Tercero_Implicado | Checkbox |
+
 **PushSubscriptions**
 | Campo | Tipo |
 |---|---|

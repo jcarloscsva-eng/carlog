@@ -4,8 +4,10 @@ import type {
   Itv,
   LoginCode,
   Mantenimiento,
+  Parte,
   PushSubscriptionRecord,
   Repuesto,
+  Seguro,
   Vehiculo,
 } from './types'
 
@@ -15,6 +17,8 @@ export const TABLES = {
   Mantenimientos: 'Mantenimientos',
   Repuestos: 'Repuestos',
   Itv: 'ITV',
+  Seguros: 'Seguros',
+  Partes: 'Partes',
   PushSubscriptions: 'PushSubscriptions',
   AlertasEnviadas: 'AlertasEnviadas',
   LoginCodes: 'LoginCodes',
@@ -152,6 +156,64 @@ export function itvToAirtable(i: Omit<Itv, 'id'>): AirtableFields {
     Fecha_Realizada: i.fechaRealizada,
     Resultado: i.resultado,
     Fecha_Proxima: i.fechaProxima,
+  }
+}
+
+// --- Seguros -------------------------------------------------------------
+
+export function seguroFromAirtable(id: string, fields: AirtableFields): Seguro {
+  return {
+    id,
+    vehiculoId: String(fields.Vehiculo ?? ''),
+    compania: String(fields.Compania ?? ''),
+    numeroPoliza: String(fields.Numero_Poliza ?? ''),
+    tipoCobertura: (fields.Tipo_Cobertura as Seguro['tipoCobertura']) ?? 'Terceros',
+    fechaInicio: String(fields.Fecha_Inicio ?? ''),
+    fechaRenovacion: String(fields.Fecha_Renovacion ?? ''),
+    precio: Number(fields.Precio ?? 0),
+    telefonoAsistencia: fields.Telefono_Asistencia ? String(fields.Telefono_Asistencia) : undefined,
+  }
+}
+
+export function seguroToAirtable(s: Omit<Seguro, 'id'>): AirtableFields {
+  return {
+    Vehiculo: s.vehiculoId,
+    Compania: s.compania,
+    Numero_Poliza: s.numeroPoliza,
+    Tipo_Cobertura: s.tipoCobertura,
+    Fecha_Inicio: s.fechaInicio,
+    Fecha_Renovacion: s.fechaRenovacion,
+    Precio: s.precio,
+    Telefono_Asistencia: s.telefonoAsistencia || null,
+  }
+}
+
+// --- Partes ----------------------------------------------------------------
+
+export function parteFromAirtable(id: string, fields: AirtableFields): Parte {
+  return {
+    id,
+    vehiculoId: String(fields.Vehiculo ?? ''),
+    fecha: String(fields.Fecha ?? ''),
+    tipo: (fields.Tipo as Parte['tipo']) ?? 'Otro',
+    descripcion: String(fields.Descripcion ?? ''),
+    numeroParte: fields.Numero_Parte ? String(fields.Numero_Parte) : undefined,
+    estado: (fields.Estado as Parte['estado']) ?? 'Abierto',
+    coste: fields.Coste !== undefined && fields.Coste !== null ? Number(fields.Coste) : undefined,
+    terceroImplicado: Boolean(fields.Tercero_Implicado ?? false),
+  }
+}
+
+export function parteToAirtable(p: Omit<Parte, 'id'>): AirtableFields {
+  return {
+    Vehiculo: p.vehiculoId,
+    Fecha: p.fecha,
+    Tipo: p.tipo,
+    Descripcion: p.descripcion,
+    Numero_Parte: p.numeroParte || null,
+    Estado: p.estado,
+    Coste: p.coste ?? null,
+    Tercero_Implicado: p.terceroImplicado,
   }
 }
 

@@ -6,12 +6,13 @@ import { AveriasTab } from '../components/tabs/AveriasTab'
 import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
 import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
+import { SeguroTab } from '../components/tabs/SeguroTab'
 import { Modal } from '../components/Modal'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
 import type { VehiculoTipo } from '@shared/types'
 
-const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV'] as const
+const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
 type Tab = (typeof TABS)[number]
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
@@ -26,6 +27,8 @@ export function VehiculoDetailPage() {
   const { data: mantenimientos, reload: reloadMantenimientos } = useCollection(api.mantenimientos.list)
   const { data: repuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
   const { data: itvs, reload: reloadItv } = useCollection(api.itv.list)
+  const { data: seguros, reload: reloadSeguros } = useCollection(api.seguros.list)
+  const { data: partes, reload: reloadPartes } = useCollection(api.partes.list)
 
   const vehiculo = vehiculos.find((v) => v.id === routeId)
   // Averias/Mantenimientos/Repuestos/ITV enlazan por matrícula (texto), no
@@ -167,6 +170,15 @@ export function VehiculoDetailPage() {
       )}
       {tab === 'ITV' && (
         <ItvTab vehiculoId={matricula} itvs={misItvs} reload={reloadItv} />
+      )}
+      {tab === 'Seguro' && (
+        <SeguroTab
+          vehiculoId={matricula}
+          seguros={seguros.filter((s) => s.vehiculoId === matricula)}
+          partes={partes.filter((p) => p.vehiculoId === matricula)}
+          reloadSeguros={reloadSeguros}
+          reloadPartes={reloadPartes}
+        />
       )}
 
       <Modal open={editing} onClose={() => setEditing(false)} title="Editar vehículo">
