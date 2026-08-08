@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Parte, ParteEstado, ParteTipo, Seguro, SeguroTipoCobertura } from '@shared/types'
 import { api } from '../../lib/api'
+import { EstadoStamp } from '../EstadoStamp'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -233,23 +234,13 @@ function PartesSection({
               <p className="text-sm text-ink">
                 {p.tipo} — {p.descripcion}
               </p>
-              <p className="text-xs text-ink-dim">
-                {p.fecha} ·{' '}
-                <span
-                  className={
-                    p.estado === 'Cerrado'
-                      ? 'text-emerald-700'
-                      : p.estado === 'En trámite'
-                        ? 'text-amber-700'
-                        : 'text-red-700'
-                  }
-                >
-                  {p.estado}
-                </span>
+              <p className="mb-1 text-xs text-ink-dim">
+                {p.fecha}
                 {p.numeroParte && <> · Expediente {p.numeroParte}</>}
                 {p.coste !== undefined && <> · {p.coste.toLocaleString('es-ES')} €</>}
                 {p.terceroImplicado && <> · Con tercero</>}
               </p>
+              <EstadoStamp estado={p.estado} />
             </div>
             <div className="flex shrink-0 gap-2">
               <button onClick={() => setEditing(p)} className="btn-ghost px-2 py-1 text-xs">

@@ -9,13 +9,38 @@
   --color-ink-dim: #7a7160;
   --color-stamp: #a13328;
   --color-stamp-soft: #a133281a;
+  --color-olive: #5b6b46;
+  --color-olive-soft: #5b6b4614;
+  --color-gold: #8a6d1e;
+  --color-gold-soft: #8a6d1e14;
 
   --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
+}
+
+/* Modo oscuro: se adapta automáticamente al tema del sistema. Mismos
+   tokens, "cuaderno de a bordo" a la luz de una lámpara en vez de a la
+   luz del día — el sello (--color-stamp) se aclara para seguir
+   destacando sobre un fondo oscuro. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-paper: #1b1712;
+    --color-paper-2: #241f18;
+    --color-line: #423a2c;
+    --color-ink: #ded3bf;
+    --color-ink-bright: #f6efe0;
+    --color-ink-dim: #a99b83;
+    --color-stamp: #e2624f;
+    --color-stamp-soft: #e2624f22;
+    --color-olive: #92ac72;
+    --color-olive-soft: #92ac7222;
+    --color-gold: #d1ab52;
+    --color-gold-soft: #d1ab5222;
+  }
 }
 
 body {
@@ -72,5 +97,32 @@ body {
   }
   .nav-link.active {
     @apply text-stamp;
+  }
+
+  /* Sello de estado: la app es un cuaderno de a bordo, así que un estado
+     (Resuelta, Favorable, Cerrado…) se marca como se marcaría a mano en
+     un cuaderno real — un sello de tinta, no una etiqueta de color plano. */
+  .stamp-badge {
+    @apply relative inline-flex items-center rounded-full border-[1.5px] px-2.5 py-0.5 text-[0.66rem] font-semibold tracking-[0.09em] uppercase;
+    font-family: var(--font-sans);
+    transform: rotate(-3deg);
+  }
+  .stamp-badge::after {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: inherit;
+    border: 1px dashed currentColor;
+    opacity: 0.35;
+    pointer-events: none;
+  }
+  .stamp-badge.is-positive {
+    @apply border-olive text-olive bg-olive-soft;
+  }
+  .stamp-badge.is-negative {
+    @apply border-stamp text-stamp bg-stamp-soft;
+  }
+  .stamp-badge.is-neutral {
+    @apply border-gold text-gold bg-gold-soft;
   }
 }

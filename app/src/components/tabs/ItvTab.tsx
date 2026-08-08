@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Itv, ItvResultado } from '@shared/types'
 import { api } from '../../lib/api'
+import { EstadoStamp } from '../EstadoStamp'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -138,9 +139,7 @@ export function ItvTab({
         {ordenadas.map((i) => (
           <li key={i.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
-              <p className="text-sm text-ink">
-                Resultado: <span className="font-medium text-ink-bright">{i.resultado}</span>
-              </p>
+              <div className="mb-1"><EstadoStamp estado={i.resultado} /></div>
               <p className="text-xs text-ink-dim">
                 Realizada el {i.fechaRealizada} · Próxima el{' '}
                 <span className="font-medium text-stamp">
