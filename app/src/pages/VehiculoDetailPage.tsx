@@ -8,6 +8,7 @@ import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
 import { Modal } from '../components/Modal'
+import { MarcaModeloFields } from '../components/MarcaModeloFields'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
@@ -233,8 +234,7 @@ export function VehiculoDetailPage() {
       >
         {vehiculo && (
           <form onSubmit={handleEditSubmit} className="grid gap-2 sm:grid-cols-2">
-            <input name="marca" required defaultValue={vehiculo.marca} placeholder="Marca" className="input" />
-            <input name="modelo" required defaultValue={vehiculo.modelo} placeholder="Modelo" className="input" />
+            <MarcaModeloFields defaultMarca={vehiculo.marca} defaultModelo={vehiculo.modelo} />
             <input
               name="matricula"
               required
