@@ -1,4 +1,6 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet } from 'react-router-dom'
+import { api } from '../lib/api'
+import { useCollection } from '../hooks/useCollection'
 import { NotificationsButton } from './NotificationsButton'
 import { useAuth } from './AuthGate'
 import { IconGarage, IconReportes, IconUsers } from './Icons'
@@ -8,6 +10,12 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
 
 export function Layout() {
   const { email, isAdmin, logout, showKmReminder, dismissKmReminder } = useAuth()
+  const { data: vehiculos } = useCollection(api.vehiculos.list)
+
+  // Si solo hay un vehículo, el aviso lleva directo a su edición con el
+  // km enfocado; con varios, lleva al garaje para elegir cuál tocar.
+  const kmReminderHref =
+    vehiculos.length === 1 ? `/vehiculos/${vehiculos[0].id}?editarKm=1` : '/'
 
   return (
     <div className="min-h-screen bg-paper">
@@ -44,7 +52,14 @@ export function Layout() {
           <div className="entry mb-6 flex items-start justify-between gap-3 p-3">
             <p className="text-sm text-ink">
               📏 ¿Tienes a mano el cuentakilómetros? Actualiza el kilometraje de tus
-              vehículos para que las alertas de mantenimiento e ITV no se despisten.
+              vehículos para que las alertas de mantenimiento e ITV no se despisten. —{' '}
+              <Link
+                to={kmReminderHref}
+                onClick={dismissKmReminder}
+                className="font-medium text-stamp hover:underline"
+              >
+                Actualizar ahora
+              </Link>
             </p>
             <button
               onClick={dismissKmReminder}

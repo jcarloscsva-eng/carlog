@@ -1,5 +1,5 @@
-import { useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { AveriasTab } from '../components/tabs/AveriasTab'
@@ -30,6 +30,7 @@ export function VehiculoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const routeId = id!
   const [tab, setTab] = useState<Tab>('Averías')
+  const [searchParams, setSearchParams] = useSearchParams()
 
   const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
   const { data: averias, reload: reloadAverias } = useCollection(api.averias.list)
@@ -47,6 +48,22 @@ export function VehiculoDetailPage() {
   const [editing, setEditing] = useState(false)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+  const [focusKm, setFocusKm] = useState(false)
+
+  // Al llegar con ?editarKm=1 (p. ej. desde el aviso de kilometraje
+  // desactualizado), abre directamente el formulario de edición con el
+  // foco en el campo de km, en vez de obligar a buscar el botón.
+  useEffect(() => {
+    if (vehiculo && searchParams.get('editarKm') === '1') {
+      setEditing(true)
+      setFocusKm(true)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('editarKm')
+        return next
+      }, { replace: true })
+    }
+  }, [vehiculo, searchParams, setSearchParams])
 
   const misMantenimientos = useMemo(
     () => mantenimientos.filter((m) => m.vehiculoId === matricula),
@@ -194,7 +211,14 @@ export function VehiculoDetailPage() {
         />
       )}
 
-      <Modal open={editing} onClose={() => setEditing(false)} title="Editar vehículo">
+      <Modal
+        open={editing}
+        onClose={() => {
+          setEditing(false)
+          setFocusKm(false)
+        }}
+        title="Editar vehículo"
+      >
         {vehiculo && (
           <form onSubmit={handleEditSubmit} className="grid gap-2 sm:grid-cols-2">
             <input name="marca" required defaultValue={vehiculo.marca} placeholder="Marca" className="input" />
@@ -225,6 +249,7 @@ export function VehiculoDetailPage() {
               name="kmActual"
               required
               type="number"
+              autoFocus={focusKm}
               defaultValue={vehiculo.kmActual}
               placeholder="Km actual"
               className="input"
