@@ -6,7 +6,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   `nav-link ${isActive ? 'active' : ''}`
 
 export function Layout() {
-  const { email, logout } = useAuth()
+  const { email, logout, showKmReminder, dismissKmReminder } = useAuth()
 
   return (
     <div className="min-h-screen bg-paper">
@@ -31,6 +31,21 @@ export function Layout() {
         </div>
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">
+        {showKmReminder && (
+          <div className="entry mb-6 flex items-start justify-between gap-3 p-3">
+            <p className="text-sm text-ink">
+              📏 ¿Tienes a mano el cuentakilómetros? Actualiza el kilometraje de tus
+              vehículos para que las alertas de mantenimiento e ITV no se despisten.
+            </p>
+            <button
+              onClick={dismissKmReminder}
+              className="shrink-0 text-ink-dim hover:text-stamp"
+              aria-label="Descartar aviso"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <Outlet />
       </main>
     </div>

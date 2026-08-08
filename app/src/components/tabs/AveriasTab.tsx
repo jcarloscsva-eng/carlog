@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Averia } from '@shared/types'
 import { api } from '../../lib/api'
+import { EstadoStamp } from '../EstadoStamp'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -101,12 +102,8 @@ export function AveriasTab({
           <li key={a.id} className="entry flex items-start justify-between gap-3 p-3">
             <div>
               <p className="text-sm text-ink">{a.descripcion}</p>
-              <p className="text-xs text-ink-dim">
-                {a.fecha} ·{' '}
-                <span className={a.estado === 'Pendiente' ? 'text-amber-700' : 'text-emerald-700'}>
-                  {a.estado}
-                </span>
-              </p>
+              <p className="mb-1 text-xs text-ink-dim">{a.fecha}</p>
+              <EstadoStamp estado={a.estado} />
             </div>
             <div className="flex shrink-0 gap-2">
               <a

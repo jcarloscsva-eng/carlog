@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { api } from '../lib/api'
+import { registrarConexionYComprobarAvisoKm } from '../lib/kmReminder'
 
-const AuthContext = createContext<{ email: string; logout: () => void } | null>(null)
+const AuthContext = createContext<{
+  email: string
+  logout: () => void
+  showKmReminder: boolean
+  dismissKmReminder: () => void
+} | null>(null)
 
 export function useAuth() {
   const ctx = useContext(AuthContext)
@@ -11,20 +17,29 @@ export function useAuth() {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null | undefined>(undefined)
+  const [showKmReminder, setShowKmReminder] = useState(false)
 
   useEffect(() => {
     api.auth
       .me()
-      .then((res) => setEmail(res.email))
+      .then((res) => {
+        setEmail(res.email)
+        setShowKmReminder(registrarConexionYComprobarAvisoKm(res.email))
+      })
       .catch(() => setEmail(null))
   }, [])
+
+  function handleLoggedIn(loggedInEmail: string) {
+    setEmail(loggedInEmail)
+    setShowKmReminder(registrarConexionYComprobarAvisoKm(loggedInEmail))
+  }
 
   if (email === undefined) {
     return <div className="flex min-h-screen items-center justify-center bg-paper text-sm text-ink-dim">Cargando…</div>
   }
 
   if (email === null) {
-    return <LoginForm onLoggedIn={setEmail} />
+    return <LoginForm onLoggedIn={handleLoggedIn} />
   }
 
   return (
@@ -34,6 +49,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
         logout: () => {
           api.auth.logout().finally(() => setEmail(null))
         },
+        showKmReminder,
+        dismissKmReminder: () => setShowKmReminder(false),
       }}
     >
       {children}
@@ -77,30 +94,30 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-paper p-4">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage: 'linear-gradient(to bottom, #3a352e 1px, transparent 1px)',
-          backgroundSize: '100% 32px',
-        }}
-      />
+    <div className="login-screen">
+      <div className="login-wrap">
+        <h1 className="login-lockup" aria-label="Carlog">
+          <svg className="login-mark" viewBox="0 0 57 64" aria-hidden="true">
+            <path className="road" d="M 48.1 45.5 A 21 21 0 1 1 48.1 18.5" />
+            <path className="lane" d="M 48.1 45.5 A 21 21 0 1 1 48.1 18.5" />
+            <g className="car-drive">
+              <path className="car" d="M -9 3 L -7 -1 L -3 -3 L 3 -3 L 6 0 L 9 3 L 9 5 L -9 5 Z" />
+              <circle className="car-hl" cx="-4.5" cy="5" r="2.2" />
+              <circle className="car-hl" cx="4.5" cy="5" r="2.2" />
+            </g>
+          </svg>
+          <span className="login-rest" aria-hidden="true">
+            ar<em>log</em>
+          </span>
+        </h1>
 
-      <div className="relative w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <span className="eyebrow justify-center">Gestión de vehículos</span>
-          <h1 className="heading mt-3 text-3xl">
-            Car<em>log</em>
-          </h1>
-        </div>
+        <p className="login-tag">
+          {step === 'email'
+            ? 'Introduce tu email para recibir un código de acceso.'
+            : `Introduce el código que te hemos enviado a ${email}.`}
+        </p>
 
-        <div className="panel p-6">
-          <p className="mb-4 text-sm text-ink-dim">
-            {step === 'email'
-              ? 'Introduce tu email para recibir un código de acceso.'
-              : `Introduce el código que te hemos enviado a ${email}.`}
-          </p>
-
+        <div className="login-card panel p-6 text-left">
           {step === 'email' ? (
             <form onSubmit={handleRequestCode}>
               <input

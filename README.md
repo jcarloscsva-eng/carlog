@@ -76,6 +76,30 @@ son los que usa el código):
 | Resultado | Single select: `Favorable`, `Desfavorable`, `Negativo` |
 | Fecha_Proxima | Date (la calcula la app al crear el registro) |
 
+**Seguros**
+| Campo | Tipo |
+|---|---|
+| Vehiculo | Single line text (matrícula) |
+| Compania | Single line text |
+| Numero_Poliza | Single line text |
+| Tipo_Cobertura | Single select: `Terceros`, `Terceros Ampliado`, `Todo Riesgo` |
+| Fecha_Inicio | Date |
+| Fecha_Renovacion | Date |
+| Precio | Number (decimal) |
+| Telefono_Asistencia | Single line text (opcional) |
+
+**Partes**
+| Campo | Tipo |
+|---|---|
+| Vehiculo | Single line text (matrícula) |
+| Fecha | Date |
+| Tipo | Single select: `Colisión`, `Robo`, `Vandalismo`, `Lunas`, `Incendio`, `Fenómenos atmosféricos`, `Otro` |
+| Descripcion | Long text |
+| Numero_Parte | Single line text (opcional) |
+| Estado | Single select: `Abierto`, `En trámite`, `Cerrado` |
+| Coste | Number (decimal, opcional) |
+| Tercero_Implicado | Checkbox |
+
 **PushSubscriptions**
 | Campo | Tipo |
 |---|---|
@@ -158,8 +182,10 @@ npm run dev:app             # :5173
 
 # Cron worker (alertas) en local:
 cp .env.example cron-worker/.dev.vars
+# añade además CRON_DEBUG_TOKEN=cualquier-cadena a cron-worker/.dev.vars
 npm run dev:cron
-# dispara la revisión manualmente: curl http://localhost:8787/__run
+# dispara la revisión manualmente:
+curl "http://localhost:8787/__run?token=cualquier-cadena"
 ```
 
 El login funciona igual en local que en producción: pide tu email, te manda
@@ -192,7 +218,11 @@ wrangler secret put APP_URL
 npm run deploy:cron
 ```
 
-El cron se ejecuta cada día a las 08:00 UTC (`cron-worker/wrangler.toml`).
+El cron se ejecuta cada día a las 08:00 UTC (`cron-worker/wrangler.toml`). El
+worker tiene una URL pública además del cron programado; la ruta
+`/__run` (para forzar una revisión manual) está deshabilitada salvo que
+configures el secret `CRON_DEBUG_TOKEN` — no lo definas en producción a
+menos que necesites depurar algo puntualmente.
 
 ## Notas
 
@@ -200,5 +230,6 @@ El cron se ejecuta cada día a las 08:00 UTC (`cron-worker/wrangler.toml`).
   la normativa española habitual (4 años, luego cada 2 hasta los 10, luego
   anual) y no cubre casos especiales — corrige la fecha manualmente si tu
   caso difiere.
-- Los iconos en `app/public/icons/` son placeholders sólidos; sustitúyelos
-  por el icono real de la app antes de publicar.
+- Los iconos en `app/public/icons/` usan el logo de Carlog (la C con forma
+  de carretera). Si cambias el logo, regenera `icon-192.png` e
+  `icon-512.png` a partir del mismo SVG que usa `AuthGate.tsx`.

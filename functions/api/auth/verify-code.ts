@@ -38,12 +38,20 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const match = candidatos.find((c) => c.code === code)
 
   if (!match) {
-    // Registra el intento fallido en el código más reciente para limitar fuerza bruta.
-    const ultimo = candidatos[0]
-    if (ultimo && ultimo.attempts + 1 >= MAX_ATTEMPTS) {
-      await airtableUpdate(env, TABLES.LoginCodes, ultimo.id, { Used: true })
-    } else if (ultimo) {
-      await airtableUpdate(env, TABLES.LoginCodes, ultimo.id, { Attempts: ultimo.attempts + 1 })
+    // Límite de intentos por email, no por código: si no sumáramos los
+    // intentos de todos los códigos activos, pedir varios códigos dentro
+    // de la ventana de 10 minutos (hasta 5/hora) daría MAX_ATTEMPTS
+    // intentos "gratis" por cada uno en vez de un único límite global.
+    const totalIntentos = candidatos.reduce((suma, c) => suma + c.attempts, 0)
+    if (candidatos.length > 0) {
+      if (totalIntentos + 1 >= MAX_ATTEMPTS) {
+        await Promise.all(
+          candidatos.map((c) => airtableUpdate(env, TABLES.LoginCodes, c.id, { Used: true })),
+        )
+      } else {
+        const ultimo = candidatos[0]
+        await airtableUpdate(env, TABLES.LoginCodes, ultimo.id, { Attempts: ultimo.attempts + 1 })
+      }
     }
     return json({ error: 'Código incorrecto o caducado' }, 401)
   }
