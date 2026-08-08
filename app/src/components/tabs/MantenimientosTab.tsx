@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { Mantenimiento } from '@shared/types'
 import { api } from '../../lib/api'
+import { IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -289,11 +290,11 @@ export function MantenimientosTab({
               </p>
             </div>
             <div className="flex shrink-0 gap-2">
-              <button onClick={() => setEditing(m)} className="btn-ghost px-2 py-1 text-xs">
-                Editar
+              <button onClick={() => setEditing(m)} className="icon-btn" aria-label="Editar mantenimiento" title="Editar">
+                <IconEdit className="h-4 w-4" />
               </button>
-              <button onClick={() => handleDelete(m)} className="btn-ghost px-2 py-1 text-xs">
-                Eliminar
+              <button onClick={() => handleDelete(m)} className="icon-btn" aria-label="Eliminar mantenimiento" title="Eliminar">
+                <IconTrash className="h-4 w-4" />
               </button>
             </div>
           </li>

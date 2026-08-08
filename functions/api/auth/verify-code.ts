@@ -5,11 +5,13 @@ import {
   type AirtableEnv,
 } from '../../../shared/airtable'
 import { TABLES, loginCodeFromAirtable } from '../../../shared/airtable-mappers'
+import { esAdministrador } from '../../../shared/auth'
 import { json } from '../../../shared/http'
 import { buildSessionCookie, createSessionToken } from '../../../shared/session'
 
 type Env = AirtableEnv & {
   SESSION_SECRET: string
+  ALLOWED_EMAILS?: string
 }
 
 const MAX_ATTEMPTS = 5
@@ -60,7 +62,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
 
   const token = await createSessionToken(email, env.SESSION_SECRET, SESSION_TTL_SECONDS)
 
-  return new Response(JSON.stringify({ ok: true, email }), {
+  return new Response(JSON.stringify({ ok: true, email, isAdmin: esAdministrador(env.ALLOWED_EMAILS, email) }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json',

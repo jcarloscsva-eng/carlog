@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Parte, ParteEstado, ParteTipo, Seguro, SeguroTipoCobertura } from '@shared/types'
 import { api } from '../../lib/api'
 import { EstadoStamp } from '../EstadoStamp'
+import { IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -243,11 +244,11 @@ function PartesSection({
               <EstadoStamp estado={p.estado} />
             </div>
             <div className="flex shrink-0 gap-2">
-              <button onClick={() => setEditing(p)} className="btn-ghost px-2 py-1 text-xs">
-                Editar
+              <button onClick={() => setEditing(p)} className="icon-btn" aria-label="Editar parte" title="Editar">
+                <IconEdit className="h-4 w-4" />
               </button>
-              <button onClick={() => handleDelete(p)} className="btn-ghost px-2 py-1 text-xs">
-                Eliminar
+              <button onClick={() => handleDelete(p)} className="icon-btn" aria-label="Eliminar parte" title="Eliminar">
+                <IconTrash className="h-4 w-4" />
               </button>
             </div>
           </li>
@@ -392,11 +393,11 @@ export function SeguroTab({
               )}
             </div>
             <div className="flex shrink-0 gap-2">
-              <button onClick={() => setEditing(polizaVigente)} className="btn-ghost px-2 py-1 text-xs">
-                Editar
+              <button onClick={() => setEditing(polizaVigente)} className="icon-btn" aria-label="Editar póliza" title="Editar">
+                <IconEdit className="h-4 w-4" />
               </button>
-              <button onClick={() => handleDelete(polizaVigente)} className="btn-ghost px-2 py-1 text-xs">
-                Eliminar
+              <button onClick={() => handleDelete(polizaVigente)} className="icon-btn" aria-label="Eliminar póliza" title="Eliminar">
+                <IconTrash className="h-4 w-4" />
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Averia } from '@shared/types'
 import { api } from '../../lib/api'
 import { EstadoStamp } from '../EstadoStamp'
+import { IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -117,11 +118,11 @@ export function AveriasTab({
               <button onClick={() => marcarResuelta(a)} className="btn-ghost px-2 py-1 text-xs">
                 {a.estado === 'Pendiente' ? 'Marcar resuelta' : 'Reabrir'}
               </button>
-              <button onClick={() => setEditing(a)} className="btn-ghost px-2 py-1 text-xs">
-                Editar
+              <button onClick={() => setEditing(a)} className="icon-btn" aria-label="Editar avería" title="Editar">
+                <IconEdit className="h-4 w-4" />
               </button>
-              <button onClick={() => handleDelete(a)} className="btn-ghost px-2 py-1 text-xs">
-                Eliminar
+              <button onClick={() => handleDelete(a)} className="icon-btn" aria-label="Eliminar avería" title="Eliminar">
+                <IconTrash className="h-4 w-4" />
               </button>
             </div>
           </li>

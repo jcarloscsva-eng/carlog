@@ -1,4 +1,4 @@
-import { getAuthenticatedEmail, UnauthenticatedError, type AuthEnv } from './auth'
+import { AdminRequiredError, getAuthenticatedEmail, UnauthenticatedError, type AuthEnv } from './auth'
 import { ForbiddenError } from './ownership'
 
 export function json(data: unknown, status = 200): Response {
@@ -12,7 +12,7 @@ export function errorResponse(err: unknown): Response {
   if (err instanceof UnauthenticatedError) {
     return json({ error: err.message }, 401)
   }
-  if (err instanceof ForbiddenError) {
+  if (err instanceof ForbiddenError || err instanceof AdminRequiredError) {
     return json({ error: err.message }, 403)
   }
   console.error(err)

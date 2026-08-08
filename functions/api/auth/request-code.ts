@@ -2,6 +2,7 @@ import { airtableCreate, airtableFormulaString, airtableList, type AirtableEnv }
 import { TABLES, loginCodeToAirtable } from '../../../shared/airtable-mappers'
 import { sendEmail, type EmailEnv } from '../../../shared/email'
 import { json } from '../../../shared/http'
+import { estaInvitado } from '../../../shared/usuarios-permitidos'
 
 type Env = AirtableEnv &
   EmailEnv & {
@@ -65,7 +66,10 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   }
 
   const allowed = env.ALLOWED_EMAILS?.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean)
-  const isAllowed = !allowed || allowed.includes(email)
+  // Además de ALLOWED_EMAILS (Cloudflare), se admite cualquier email dado
+  // de alta en la tabla UsuariosPermitidos desde la pestaña Usuarios de
+  // la app — así se pueden sumar accesos sin volver a tocar Cloudflare.
+  const isAllowed = !allowed || allowed.includes(email) || (await estaInvitado(env, email))
 
   // Siempre respondemos igual, permitido o no, para no revelar qué emails están en la lista
   // (ni en el cuerpo de la respuesta ni, con el padding de abajo, en el tiempo que tarda).

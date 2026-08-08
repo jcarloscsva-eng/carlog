@@ -8,6 +8,7 @@ import type {
   PushSubscriptionRecord,
   Repuesto,
   Seguro,
+  UsuarioPermitido,
   Vehiculo,
 } from './types'
 
@@ -22,6 +23,7 @@ export const TABLES = {
   PushSubscriptions: 'PushSubscriptions',
   AlertasEnviadas: 'AlertasEnviadas',
   LoginCodes: 'LoginCodes',
+  UsuariosPermitidos: 'UsuariosPermitidos',
 } as const
 
 interface AirtableFields {
@@ -282,5 +284,24 @@ export function loginCodeToAirtable(l: Omit<LoginCode, 'id'>): AirtableFields {
     ExpiresAt: l.expiresAt,
     Used: l.used,
     Attempts: l.attempts,
+  }
+}
+
+// --- UsuariosPermitidos -----------------------------------------------------
+
+export function usuarioPermitidoFromAirtable(id: string, fields: AirtableFields): UsuarioPermitido {
+  return {
+    id,
+    email: String(fields.Email ?? ''),
+    nota: fields.Nota ? String(fields.Nota) : undefined,
+    fechaAlta: String(fields.Fecha_Alta ?? ''),
+  }
+}
+
+export function usuarioPermitidoToAirtable(u: Omit<UsuarioPermitido, 'id'>): AirtableFields {
+  return {
+    Email: u.email,
+    Nota: u.nota || null,
+    Fecha_Alta: u.fechaAlta,
   }
 }

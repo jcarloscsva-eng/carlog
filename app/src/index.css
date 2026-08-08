@@ -236,6 +236,10 @@ body {
     font-family: var(--font-sans);
   }
 
+  .icon-btn {
+    @apply inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-line text-ink-dim transition hover:border-stamp hover:text-stamp;
+  }
+
   .nav-link {
     @apply rounded-md px-3 py-2 text-sm font-medium tracking-wide text-ink-dim transition hover:text-ink;
     font-family: var(--font-sans);
