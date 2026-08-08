@@ -324,4 +324,24 @@ input[type='checkbox'] {
   .stamp-badge.is-neutral {
     @apply border-gold text-gold bg-gold-soft;
   }
+
+  /* Variante para el "dark-hero" (fondo oscuro fijo, no depende del tema
+     claro/oscuro del resto de la app) — los tokens is-positive/is-negative
+     tienen bajo contraste ahí en tema claro, así que se fijan los mismos
+     hex que ya usa el resto de la cabecera oscura. */
+  .stamp-badge.on-dark.is-positive {
+    color: #92ac72;
+    background: #92ac7222;
+    border-color: #92ac72;
+  }
+  .stamp-badge.on-dark.is-negative {
+    color: #e2624f;
+    background: #e2624f22;
+    border-color: #e2624f;
+  }
+  .stamp-badge.on-dark.is-neutral {
+    color: #d1ab52;
+    background: #d1ab5222;
+    border-color: #d1ab52;
+  }
 }
