@@ -108,14 +108,23 @@ export function VehiculoDetailPage() {
       </Link>
 
       {vehiculo && (
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="heading mb-1 text-2xl">
+        <div className="dark-hero mb-6 flex items-start justify-between gap-3 px-5 py-4">
+          <svg className="dark-hero-ghost" viewBox="0 0 57 64" aria-hidden="true">
+            <path
+              d="M 48.1 45.5 A 21 21 0 1 1 48.1 18.5"
+              fill="none"
+              stroke="#f4eee1"
+              strokeWidth={9}
+              strokeLinecap="round"
+            />
+          </svg>
+          <div className="relative">
+            <h1 className="font-display mb-1 text-2xl font-semibold">
               {vehiculo.marca} {vehiculo.modelo}
             </h1>
-            <p className="text-sm text-ink-dim">
+            <p className="text-sm text-[#b6a98f]">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-              <span className="text-stamp">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
+              <span className="font-medium text-[#e2624f]">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
               {vehiculo.fechaCompra && (
                 <>
                   {' '}
@@ -124,7 +133,10 @@ export function VehiculoDetailPage() {
               )}
             </p>
           </div>
-          <button onClick={() => setEditing(true)} className="btn-ghost shrink-0">
+          <button
+            onClick={() => setEditing(true)}
+            className="relative shrink-0 rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:border-[#e2624f] hover:text-[#e2624f]"
+          >
             Editar vehículo
           </button>
         </div>
