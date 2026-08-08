@@ -230,5 +230,6 @@ menos que necesites depurar algo puntualmente.
   la normativa española habitual (4 años, luego cada 2 hasta los 10, luego
   anual) y no cubre casos especiales — corrige la fecha manualmente si tu
   caso difiere.
-- Los iconos en `app/public/icons/` son placeholders sólidos; sustitúyelos
-  por el icono real de la app antes de publicar.
+- Los iconos en `app/public/icons/` usan el logo de Carlog (la C con forma
+  de carretera). Si cambias el logo, regenera `icon-192.png` e
+  `icon-512.png` a partir del mismo SVG que usa `AuthGate.tsx`.

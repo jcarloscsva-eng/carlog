@@ -50,6 +50,151 @@ body {
   color: var(--color-ink);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---- Login (AuthGate): el sello de tinta rodando hasta formar la C,
+   y el coche bajando por la carretera hasta el formulario. Fondo oscuro
+   fijo (no sigue el tema claro/oscuro del resto de la app) — es la
+   pantalla de bienvenida de la marca, no una vista más. ---- */
+.login-screen {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at 50% 15%, #2e2618 0%, #241e17 60%);
+}
+.login-wrap {
+  width: 100%;
+  max-width: 24rem;
+  text-align: center;
+}
+.login-lockup {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 0 0 0.6rem;
+}
+.login-mark {
+  width: 4.6rem;
+  height: 4.6rem;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.login-mark .road {
+  fill: none;
+  stroke: #b6a98f;
+  stroke-width: 9;
+  stroke-linecap: round;
+  stroke-dasharray: 132;
+  stroke-dashoffset: 132;
+  animation: login-ring 0.9s ease-out both;
+}
+.login-mark .lane {
+  fill: none;
+  stroke: #f4eee1;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 3 3.2;
+  opacity: 0;
+  animation: login-lane 0.3s ease-out both;
+  animation-delay: 0.7s;
+}
+.login-mark .car {
+  fill: #a13328;
+}
+.login-mark .car-hl {
+  fill: #f4eee1;
+}
+.login-mark .car-drive {
+  offset-path: path("M 48.1 45.5 A 21 21 0 1 1 48.1 18.5");
+  offset-distance: 100%;
+  offset-rotate: 0deg;
+  opacity: 0;
+  animation: login-drive 3.4s cubic-bezier(0.45, 0.1, 0.4, 1) both;
+  animation-delay: 0.85s;
+}
+.login-rest {
+  font-family: var(--font-display);
+  font-size: 3.4rem;
+  font-weight: 600;
+  color: #f4eee1;
+  line-height: 1;
+  opacity: 0;
+  animation: login-rise 0.4s ease-out both;
+  animation-delay: 4.05s;
+}
+.login-rest em {
+  color: #a13328;
+  font-style: italic;
+}
+.login-tag {
+  font-size: 0.95rem;
+  color: #b6a98f;
+  margin: 0 0 2.2rem;
+  opacity: 0;
+  animation: login-rise 0.5s ease-out both;
+  animation-delay: 4.55s;
+}
+.login-card {
+  opacity: 0;
+  animation: login-rise 0.6s ease-out both;
+  animation-delay: 4.7s;
+  box-shadow: 0 20px 40px -18px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes login-ring {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes login-lane {
+  to {
+    opacity: 1;
+  }
+}
+@keyframes login-drive {
+  0% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+  6% {
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 0%;
+    opacity: 1;
+  }
+}
+@keyframes login-rise {
+  from {
+    opacity: 0;
+    transform: translateY(9px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 420px) {
+  .login-rest {
+    font-size: 2.6rem;
+  }
+  .login-mark {
+    width: 3.6rem;
+    height: 3.6rem;
+  }
+}
+
 @layer components {
   .panel {
     @apply rounded-lg border border-line bg-paper-2;
