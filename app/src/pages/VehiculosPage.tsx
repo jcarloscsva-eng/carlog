@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { Modal } from '../components/Modal'
+import { MarcaModeloFields } from '../components/MarcaModeloFields'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
 import type { Vehiculo, VehiculoTipo } from '@shared/types'
@@ -224,8 +225,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => v
 
   return (
     <form onSubmit={handleSubmit} className="panel mb-6 grid gap-3 p-4 sm:grid-cols-2">
-      <input name="marca" required placeholder="Marca" className="input" />
-      <input name="modelo" required placeholder="Modelo" className="input" />
+      <MarcaModeloFields />
       <input name="matricula" required placeholder="Matrícula" className="input" />
       <input name="anio" required type="number" placeholder="Año" className="input" />
       <select name="tipo" required className="input" defaultValue="Turismo">

@@ -104,6 +104,11 @@ export const api = {
       request<UsuarioPermitido>('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/admin/usuarios/${id}`, { method: 'DELETE' }),
   },
+  vehiculoData: {
+    marcas: () => request<string[]>('/vehiculo-data/marcas'),
+    modelos: (marca: string) =>
+      request<string[]>(`/vehiculo-data/modelos?marca=${encodeURIComponent(marca)}`),
+  },
   pushSubscribe: (subscription: PushSubscriptionJSON) =>
     request<{ ok: true }>('/push-subscribe', {
       method: 'POST',
