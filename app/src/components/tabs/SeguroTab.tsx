@@ -68,7 +68,7 @@ function PolizaForm({
         placeholder="Precio anual (€)"
         className="input"
       />
-      <div>
+      <div className="min-w-0">
         <label className="mb-1 block text-xs text-ink-dim">Fecha de inicio</label>
         <input
           name="fechaInicio"
@@ -78,7 +78,7 @@ function PolizaForm({
           className="input w-full"
         />
       </div>
-      <div>
+      <div className="min-w-0">
         <label className="mb-1 block text-xs text-ink-dim">Fecha de renovación</label>
         <input
           name="fechaRenovacion"
