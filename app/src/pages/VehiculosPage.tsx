@@ -2,9 +2,10 @@ import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
+import { Modal } from '../components/Modal'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import type { VehiculoTipo } from '@shared/types'
+import type { Vehiculo, VehiculoTipo } from '@shared/types'
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
 
@@ -64,11 +65,62 @@ function ResumenHero({
   )
 }
 
+function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose: () => void }) {
+  const nombre = `${vehiculo.marca} ${vehiculo.modelo} ${vehiculo.anio}`
+  const enlaces = [
+    {
+      titulo: 'Ficha técnica',
+      detalle: 'Motorización, consumo, dimensiones y datos generales del modelo.',
+      query: `${nombre} ficha técnica`,
+    },
+    {
+      titulo: 'Mantenimiento recomendado por el fabricante',
+      detalle: 'Intervalos de revisión, aceite y correa de distribución según la marca.',
+      query: `mantenimiento recomendado ${nombre} intervalos kilometraje`,
+    },
+    {
+      titulo: 'Problemas y fallos más comunes',
+      detalle: 'Lo que suelen reportar otros propietarios en foros y redes.',
+      query: `problemas comunes fallos ${nombre} foro opiniones`,
+    },
+  ]
+
+  return (
+    <Modal open onClose={onClose} title={`${vehiculo.marca} ${vehiculo.modelo} — información útil`}>
+      <p className="mb-4 text-sm text-ink-dim">
+        Antes de empezar a llevar su historial, esto te puede ayudar a conocer mejor tu vehículo:
+      </p>
+      <ul className="space-y-2">
+        {enlaces.map((e) => (
+          <li key={e.titulo}>
+            <a
+              href={`https://www.google.com/search?q=${encodeURIComponent(e.query)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="entry block p-3 transition hover:border-stamp/40"
+            >
+              <p className="text-sm font-medium text-ink-bright">{e.titulo}</p>
+              <p className="text-xs text-ink-dim">{e.detalle}</p>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <p className="mt-4 text-xs text-ink-dim">
+        Cada enlace abre una búsqueda en Google — contrasta siempre la información antes de darla por buena.
+      </p>
+      <button onClick={onClose} className="btn-ghost mt-4 w-full">
+        Cerrar
+      </button>
+    </Modal>
+  )
+}
+
 export function VehiculosPage() {
   const { data: vehiculos, loading, error, reload } = useCollection(api.vehiculos.list)
   const { data: mantenimientos } = useCollection(api.mantenimientos.list)
   const { data: itvs } = useCollection(api.itv.list)
   const [showForm, setShowForm] = useState(false)
+  const [infoVehiculo, setInfoVehiculo] = useState<Vehiculo | null>(null)
 
   const tareasUrgentes = useMemo(() => {
     const hoy = new Date()
@@ -103,12 +155,15 @@ export function VehiculosPage() {
 
       {showForm && (
         <NuevoVehiculoForm
-          onCreated={() => {
+          onCreated={(vehiculo) => {
             setShowForm(false)
             reload()
+            setInfoVehiculo(vehiculo)
           }}
         />
       )}
+
+      {infoVehiculo && <InfoVehiculoNuevo vehiculo={infoVehiculo} onClose={() => setInfoVehiculo(null)} />}
 
       {loading && <p className="text-sm text-ink-dim">Cargando…</p>}
       {error && <p className="text-sm text-red-700">{error}</p>}
@@ -139,7 +194,7 @@ export function VehiculosPage() {
   )
 }
 
-function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
+function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => void }) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -149,7 +204,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
     setSubmitting(true)
     setError(null)
     try {
-      await api.vehiculos.create({
+      const vehiculo = await api.vehiculos.create({
         marca: String(form.get('marca')),
         modelo: String(form.get('modelo')),
         matricula: String(form.get('matricula')),
@@ -159,7 +214,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: () => void }) {
         kmActualFecha: new Date().toISOString().slice(0, 10),
         fechaCompra: form.get('fechaCompra') ? String(form.get('fechaCompra')) : undefined,
       })
-      onCreated()
+      onCreated(vehiculo)
     } catch (err) {
       setError((err as Error).message)
     } finally {
