@@ -5,6 +5,7 @@ import type {
   Parte,
   Repuesto,
   Seguro,
+  UsuarioPermitido,
   Vehiculo,
 } from '@shared/types'
 
@@ -28,11 +29,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   auth: {
-    me: () => request<{ email: string }>('/auth/me'),
+    me: () => request<{ email: string; isAdmin: boolean }>('/auth/me'),
     requestCode: (email: string) =>
       request<{ ok: true }>('/auth/request-code', { method: 'POST', body: JSON.stringify({ email }) }),
     verifyCode: (email: string, code: string) =>
-      request<{ ok: true; email: string }>('/auth/verify-code', {
+      request<{ ok: true; email: string; isAdmin: boolean }>('/auth/verify-code', {
         method: 'POST',
         body: JSON.stringify({ email, code }),
       }),
@@ -96,6 +97,12 @@ export const api = {
     update: (id: string, data: Partial<Omit<Parte, 'id'>>) =>
       request<Parte>(`/partes/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/partes/${id}`, { method: 'DELETE' }),
+  },
+  usuarios: {
+    list: () => request<UsuarioPermitido[]>('/admin/usuarios'),
+    create: (data: { email: string; nota?: string }) =>
+      request<UsuarioPermitido>('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),
+    remove: (id: string) => request<{ ok: true }>(`/admin/usuarios/${id}`, { method: 'DELETE' }),
   },
   pushSubscribe: (subscription: PushSubscriptionJSON) =>
     request<{ ok: true }>('/push-subscribe', {

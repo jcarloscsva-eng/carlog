@@ -4,6 +4,7 @@ import { AuthGate } from './components/AuthGate'
 import { VehiculosPage } from './pages/VehiculosPage'
 import { VehiculoDetailPage } from './pages/VehiculoDetailPage'
 import { ReportesPage } from './pages/ReportesPage'
+import { UsuariosPage } from './pages/UsuariosPage'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
             <Route path="/" element={<VehiculosPage />} />
             <Route path="/vehiculos/:id" element={<VehiculoDetailPage />} />
             <Route path="/reportes" element={<ReportesPage />} />
+            <Route path="/usuarios" element={<UsuariosPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

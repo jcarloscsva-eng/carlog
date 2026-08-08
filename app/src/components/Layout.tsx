@@ -6,7 +6,7 @@ const linkClass = ({ isActive }: { isActive: boolean }) =>
   `nav-link ${isActive ? 'active' : ''}`
 
 export function Layout() {
-  const { email, logout, showKmReminder, dismissKmReminder } = useAuth()
+  const { email, isAdmin, logout, showKmReminder, dismissKmReminder } = useAuth()
 
   return (
     <div className="min-h-screen bg-paper">
@@ -22,6 +22,11 @@ export function Layout() {
             <NavLink to="/reportes" className={linkClass}>
               Reportes
             </NavLink>
+            {isAdmin && (
+              <NavLink to="/usuarios" className={linkClass}>
+                Usuarios
+              </NavLink>
+            )}
             <NotificationsButton />
             <span className="ml-2 hidden text-xs text-ink-dim sm:inline">{email}</span>
             <button onClick={logout} className="nav-link">

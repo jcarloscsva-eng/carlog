@@ -138,3 +138,15 @@ export interface LoginCode {
   used: boolean
   attempts: number
 }
+
+/**
+ * Emails con acceso además de los ya fijados en el secret ALLOWED_EMAILS
+ * de Cloudflare. Gestionable desde la app (pestaña Usuarios) por quien ya
+ * esté en ALLOWED_EMAILS, sin tocar Cloudflare para cada alta nueva.
+ */
+export interface UsuarioPermitido {
+  id: string
+  email: string
+  nota?: string
+  fechaAlta: string
+}

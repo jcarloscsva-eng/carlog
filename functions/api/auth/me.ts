@@ -1,5 +1,7 @@
-import type { AuthEnv } from '../../../shared/auth'
+import { esAdministrador, type AuthEnv } from '../../../shared/auth'
 import { json, withAuth } from '../../../shared/http'
 
-export const onRequestGet: PagesFunction<AuthEnv> = async ({ request, env }) =>
-  withAuth(request, env, async (email) => json({ email }))
+type Env = AuthEnv & { ALLOWED_EMAILS?: string }
+
+export const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
+  withAuth(request, env, async (email) => json({ email, isAdmin: esAdministrador(env.ALLOWED_EMAILS, email) }))

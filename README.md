@@ -124,6 +124,13 @@ son los que usa el código):
 | Used | Checkbox |
 | Attempts | Number |
 
+**UsuariosPermitidos**
+| Campo | Tipo |
+|---|---|
+| Email | Single line text |
+| Nota | Single line text (opcional, p. ej. quién es) |
+| Fecha_Alta | Date |
+
 Consigue tu `AIRTABLE_API_KEY` (Personal Access Token con permisos
 `data.records:read`/`write` sobre esta base) en
 https://airtable.com/create/tokens, y el `AIRTABLE_BASE_ID` en la URL de la
@@ -148,8 +155,14 @@ Variables a configurar:
 - `SESSION_SECRET`: cadena aleatoria larga (`openssl rand -hex 32`). Sin
   esto nadie puede iniciar sesión — trátalo como una contraseña maestra.
 - `ALLOWED_EMAILS` (opcional pero recomendado): lista de emails separados
-  por coma (tú y tu familia). Si no se define, cualquier email puede pedir
-  un código.
+  por coma — los "administradores". Si no se define, cualquier email puede
+  pedir un código (modo abierto).
+
+Además de `ALLOWED_EMAILS`, cualquier email dado de alta en la tabla
+`UsuariosPermitidos` también puede entrar. Quien ya esté en
+`ALLOWED_EMAILS` gestiona esa tabla desde la propia app (pestaña
+**Usuarios**, solo visible para administradores) — así se puede invitar a
+más gente sin volver a tocar la configuración de Cloudflare.
 
 ## 3. Resend (email)
 

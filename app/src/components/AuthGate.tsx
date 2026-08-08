@@ -4,6 +4,7 @@ import { registrarConexionYComprobarAvisoKm } from '../lib/kmReminder'
 
 const AuthContext = createContext<{
   email: string
+  isAdmin: boolean
   logout: () => void
   showKmReminder: boolean
   dismissKmReminder: () => void
@@ -17,6 +18,7 @@ export function useAuth() {
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState<string | null | undefined>(undefined)
+  const [isAdmin, setIsAdmin] = useState(false)
   const [showKmReminder, setShowKmReminder] = useState(false)
 
   useEffect(() => {
@@ -24,13 +26,15 @@ export function AuthGate({ children }: { children: ReactNode }) {
       .me()
       .then((res) => {
         setEmail(res.email)
+        setIsAdmin(res.isAdmin)
         setShowKmReminder(registrarConexionYComprobarAvisoKm(res.email))
       })
       .catch(() => setEmail(null))
   }, [])
 
-  function handleLoggedIn(loggedInEmail: string) {
+  function handleLoggedIn(loggedInEmail: string, loggedInIsAdmin: boolean) {
     setEmail(loggedInEmail)
+    setIsAdmin(loggedInIsAdmin)
     setShowKmReminder(registrarConexionYComprobarAvisoKm(loggedInEmail))
   }
 
@@ -46,6 +50,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         email,
+        isAdmin,
         logout: () => {
           api.auth.logout().finally(() => setEmail(null))
         },
@@ -58,7 +63,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   )
 }
 
-function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
+function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string, isAdmin: boolean) => void }) {
   const [step, setStep] = useState<'email' | 'code'>('email')
   const [email, setEmail] = useState('')
   const [code, setCode] = useState('')
@@ -85,7 +90,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string) => void }) {
     setError(null)
     try {
       const res = await api.auth.verifyCode(email, code)
-      onLoggedIn(res.email)
+      onLoggedIn(res.email, res.isAdmin)
     } catch (err) {
       setError((err as Error).message)
     } finally {
