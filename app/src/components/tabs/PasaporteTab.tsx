@@ -3,7 +3,9 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Averia, Itv, Mantenimiento, Parte, Repuesto, Seguro, Vehiculo } from '@shared/types'
 import type { ProximaTarea } from '@shared/alerts'
+import { calcularAniosPropiedad } from '@shared/linea-propiedad'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../Icons'
+import { LineaPropiedad } from '../LineaPropiedad'
 
 type TipoEvento = 'origen' | 'mantenimiento' | 'repuesto' | 'itv' | 'averia' | 'seguro' | 'parte' | 'futuro'
 
@@ -142,6 +144,11 @@ export function PasaporteTab({
     [proximasTareas],
   )
 
+  const aniosPropiedad = useMemo(
+    () => calcularAniosPropiedad(new Date(), vehiculo, averias, mantenimientos, repuestos, itvs, seguros, partes),
+    [vehiculo, averias, mantenimientos, repuestos, itvs, seguros, partes],
+  )
+
   // Agrupamos por año: es como se lee la vida de un coche.
   const porAnio = useMemo(() => {
     const mapa = new Map<string, Evento[]>()
@@ -214,6 +221,34 @@ export function PasaporteTab({
 
   return (
     <div>
+      <LineaPropiedad anios={aniosPropiedad} />
+      <div className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink-dim">
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-olive)' }} />
+          Mantenimiento
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-gold)' }} />
+          Repuesto
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-stamp)' }} />
+          Avería
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-itv)' }} />
+          ITV
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-0.5 w-4 rounded-full opacity-55" style={{ background: 'var(--color-ink-dim)' }} />
+          Cobertura de seguro
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-0.5 w-4" style={{ background: 'var(--color-stamp)' }} />
+          Gasto acumulado
+        </span>
+      </div>
+
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
         <div className="panel p-4">
           <p className="font-display text-2xl font-semibold text-ink-bright">{euros(costeTotal)}</p>
