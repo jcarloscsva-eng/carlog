@@ -36,11 +36,12 @@ export function VehiculoDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
-  const { data: averias, reload: reloadAverias } = useCollection(api.averias.list)
-  const { data: mantenimientos, reload: reloadMantenimientos } = useCollection(api.mantenimientos.list)
-  const { data: repuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
-  const { data: itvs, reload: reloadItv } = useCollection(api.itv.list)
-  const { data: seguros, reload: reloadSeguros } = useCollection(api.seguros.list)
+  const { data: averias, loading: cargandoAverias, reload: reloadAverias } = useCollection(api.averias.list)
+  const { data: mantenimientos, loading: cargandoMantenimientos, reload: reloadMantenimientos } =
+    useCollection(api.mantenimientos.list)
+  const { data: repuestos, loading: cargandoRepuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
+  const { data: itvs, loading: cargandoItvs, reload: reloadItv } = useCollection(api.itv.list)
+  const { data: seguros, loading: cargandoSeguros, reload: reloadSeguros } = useCollection(api.seguros.list)
   const { data: partes, reload: reloadPartes } = useCollection(api.partes.list)
 
   const vehiculo = vehiculos.find((v) => v.id === routeId)
@@ -86,6 +87,15 @@ export function VehiculoDetailPage() {
     () => repuestos.filter((r) => r.vehiculoId === matricula),
     [repuestos, matricula],
   )
+
+  // Hasta que no están las cinco colecciones, el recuento sería falso
+  // (ver VehiculosPage): mejor no pintar el globo que pintar uno erróneo.
+  const avisosListos =
+    !cargandoAverias &&
+    !cargandoMantenimientos &&
+    !cargandoRepuestos &&
+    !cargandoItvs &&
+    !cargandoSeguros
 
   const avisos = useMemo(
     () =>
@@ -150,7 +160,7 @@ export function VehiculoDetailPage() {
               <h1 className="font-display text-2xl font-semibold">
                 {vehiculo.marca} {vehiculo.modelo}
               </h1>
-              {avisos && <GloboAvisos avisos={avisos} enOscuro />}
+              {avisosListos && avisos && <GloboAvisos avisos={avisos} enOscuro />}
             </div>
             <p className="text-sm text-[#b6a98f]">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}

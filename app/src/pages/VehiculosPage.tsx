@@ -120,11 +120,22 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
 
 export function VehiculosPage() {
   const { data: vehiculos, loading, error, reload } = useCollection(api.vehiculos.list)
-  const { data: mantenimientos } = useCollection(api.mantenimientos.list)
-  const { data: itvs } = useCollection(api.itv.list)
-  const { data: averias } = useCollection(api.averias.list)
-  const { data: seguros } = useCollection(api.seguros.list)
-  const { data: repuestos } = useCollection(api.repuestos.list)
+  const { data: mantenimientos, loading: cargandoMantenimientos } = useCollection(api.mantenimientos.list)
+  const { data: itvs, loading: cargandoItvs } = useCollection(api.itv.list)
+  const { data: averias, loading: cargandoAverias } = useCollection(api.averias.list)
+  const { data: seguros, loading: cargandoSeguros } = useCollection(api.seguros.list)
+  const { data: repuestos, loading: cargandoRepuestos } = useCollection(api.repuestos.list)
+
+  // El globo resume cinco colecciones que cargan por separado. Hasta que
+  // están todas, el recuento sería falso: sin las ITV cargadas, por
+  // ejemplo, se recurre a la fecha estimada de primera ITV (que casi
+  // siempre ya pasó) y saldría un globo rojo que desaparece solo.
+  const avisosListos =
+    !cargandoMantenimientos &&
+    !cargandoItvs &&
+    !cargandoAverias &&
+    !cargandoSeguros &&
+    !cargandoRepuestos
   const [showForm, setShowForm] = useState(false)
   const [infoVehiculo, setInfoVehiculo] = useState<Vehiculo | null>(null)
 
@@ -187,7 +198,7 @@ export function VehiculosPage() {
           )
           return (
             <div key={v.id} className="relative">
-              <GloboAvisos avisos={avisos} esquina />
+              {avisosListos && <GloboAvisos avisos={avisos} esquina />}
               <Link
                 to={`/vehiculos/${v.id}`}
                 className="panel block p-4 transition hover:border-stamp/30"
