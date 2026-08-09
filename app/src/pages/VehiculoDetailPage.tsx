@@ -7,19 +7,21 @@ import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
 import { RepuestosTab } from '../components/tabs/RepuestosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
+import { PasaporteTab } from '../components/tabs/PasaporteTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
 import { GloboAvisos } from '../components/GloboAvisos'
-import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro } from '../components/Icons'
+import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
 import { contarAvisos } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
-const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
+const TABS = ['Pasaporte', 'Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_ICONS: Record<Tab, typeof IconAveria> = {
+  Pasaporte: IconVehiculo,
   Averías: IconAveria,
   Mantenimientos: IconMantenimiento,
   Repuestos: IconRepuesto,
@@ -32,7 +34,7 @@ const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
 export function VehiculoDetailPage() {
   const { id } = useParams<{ id: string }>()
   const routeId = id!
-  const [tab, setTab] = useState<Tab>('Averías')
+  const [tab, setTab] = useState<Tab>('Pasaporte')
   const [searchParams, setSearchParams] = useSearchParams()
 
   const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
@@ -182,7 +184,8 @@ export function VehiculoDetailPage() {
         </div>
       )}
 
-      {vehiculo && (
+      {/* El Pasaporte ya termina con "Lo que viene", así que aquí sobraría. */}
+      {vehiculo && tab !== 'Pasaporte' && (
         <div className="mb-6">
           <span className="eyebrow">Próximas tareas</span>
           <ul className="mt-2 space-y-2">
@@ -227,6 +230,18 @@ export function VehiculoDetailPage() {
         })}
       </div>
 
+      {tab === 'Pasaporte' && vehiculo && (
+        <PasaporteTab
+          vehiculo={vehiculo}
+          averias={misAverias}
+          mantenimientos={misMantenimientos}
+          repuestos={misRepuestos}
+          itvs={misItvs}
+          seguros={misSeguros}
+          partes={partes.filter((p) => p.vehiculoId === matricula)}
+          proximasTareas={proximasTareas}
+        />
+      )}
       {tab === 'Averías' && (
         <AveriasTab
           vehiculoId={matricula}
