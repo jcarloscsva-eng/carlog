@@ -13,6 +13,11 @@
   --color-olive-soft: #5b6b4614;
   --color-gold: #8a6d1e;
   --color-gold-soft: #8a6d1e14;
+  /* Solo para la línea de tiempo de propiedad: la ITV es un trámite
+     oficial, no un gasto ni una avería — tono propio en vez del trío
+     rojo/verde/dorado del resto de la app. */
+  --color-itv: #4f6b78;
+  --color-itv-soft: #4f6b7814;
 
   --font-display: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -40,6 +45,8 @@
     --color-olive-soft: #92ac7222;
     --color-gold: #d1ab52;
     --color-gold-soft: #d1ab5222;
+    --color-itv: #8fa9b5;
+    --color-itv-soft: #8fa9b522;
   }
 }
 
