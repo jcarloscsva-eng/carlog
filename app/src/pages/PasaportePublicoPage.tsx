@@ -23,7 +23,7 @@ export function PasaportePublicoPage() {
   const [datos, setDatos] = useState<PasaportePublico | null>(null)
   // `culpaDelEnlace` distingue "el enlace ya no sirve" de "el servidor ha
   // fallado": en el segundo caso pedir un enlace nuevo no arregla nada.
-  const [error, setError] = useState<{ mensaje: string; culpaDelEnlace: boolean } | null>(null)
+  const [error, setError] = useState<{ mensaje: string; culpaDelEnlace: boolean; codigo?: string } | null>(null)
 
   useEffect(() => {
     fetch(`/api/publico/pasaporte?token=${encodeURIComponent(token ?? '')}`)
@@ -32,13 +32,14 @@ export function PasaportePublicoPage() {
         // página de error). Sin esto, el visitante veía el error crudo del
         // parser en vez de un mensaje entendible.
         const texto = await res.text()
-        let body: { error?: string } & Partial<PasaportePublico>
+        let body: { error?: string; codigo?: string } & Partial<PasaportePublico>
         try {
           body = JSON.parse(texto)
         } catch {
           setError({
             mensaje: 'No se pudo cargar el historial. Inténtalo de nuevo en un momento.',
             culpaDelEnlace: false,
+            codigo: `respuesta-no-json-${res.status}`,
           })
           return
         }
@@ -46,6 +47,7 @@ export function PasaportePublicoPage() {
           setError({
             mensaje: body.error ?? 'No se pudo abrir el enlace',
             culpaDelEnlace: res.status === 400 || res.status === 404,
+            codigo: body.codigo,
           })
           return
         }
@@ -55,6 +57,7 @@ export function PasaportePublicoPage() {
         setError({
           mensaje: 'No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.',
           culpaDelEnlace: false,
+          codigo: 'sin-conexion',
         }),
       )
   }, [token])
@@ -91,6 +94,9 @@ export function PasaportePublicoPage() {
               <p className="mt-1 text-sm text-ink-dim">
                 Pide a quien te lo envió que genere un enlace nuevo.
               </p>
+            )}
+            {error.codigo && (
+              <p className="mt-3 font-mono text-xs text-ink-dim">código: {error.codigo} · v2</p>
             )}
           </div>
         )}
