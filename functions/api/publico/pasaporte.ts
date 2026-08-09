@@ -23,16 +23,25 @@ type Env = AirtableEnv & { SESSION_SECRET: string }
 export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
   try {
     const token = new URL(request.url).searchParams.get('token')
-    if (!token) return json({ error: 'Enlace no válido' }, 400)
+    if (!token) return json({ error: 'Enlace no válido', codigo: 'sin-token' }, 400)
+
+    if (!env.SESSION_SECRET) {
+      // Si faltara el secreto, la firma nunca validaría y el mensaje
+      // "enlace caducado" despistaría: mejor decir la verdad.
+      return json({ error: 'La aplicación no está bien configurada', codigo: 'sin-secreto' }, 500)
+    }
 
     const vehiculoId = await verificarTokenCompartir(token, env.SESSION_SECRET)
-    if (!vehiculoId) return json({ error: 'Este enlace no es válido o ha caducado' }, 404)
+    if (!vehiculoId) {
+      return json({ error: 'Este enlace no es válido o ha caducado', codigo: 'firma' }, 404)
+    }
 
     let registro
     try {
       registro = await airtableGet<Record<string, unknown>>(env, TABLES.Vehiculos, vehiculoId)
-    } catch {
-      return json({ error: 'Este enlace no es válido o ha caducado' }, 404)
+    } catch (err) {
+      console.error('No se pudo leer el vehículo compartido', err)
+      return json({ error: 'Este enlace no es válido o ha caducado', codigo: 'vehiculo' }, 404)
     }
 
     const completo = vehiculoFromAirtable(registro.id, registro.fields)
@@ -92,6 +101,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     // excepción, Cloudflare responde una página HTML y el navegador falla
     // con "Unexpected token '<'".
     console.error('Error sirviendo el pasaporte público', err)
-    return json({ error: 'No se pudo cargar el historial. Inténtalo de nuevo en un momento.' }, 500)
+    return json(
+      {
+        error: 'No se pudo cargar el historial. Inténtalo de nuevo en un momento.',
+        codigo: 'historial',
+      },
+      500,
+    )
   }
 }
