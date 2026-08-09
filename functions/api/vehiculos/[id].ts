@@ -1,4 +1,11 @@
-import { airtableDelete, airtableUpdate, type AirtableEnv } from '../../../shared/airtable'
+import {
+  airtableDelete,
+  airtableDeleteMany,
+  airtableFormulaString,
+  airtableList,
+  airtableUpdate,
+  type AirtableEnv,
+} from '../../../shared/airtable'
 import { TABLES, vehiculoFromAirtable } from '../../../shared/airtable-mappers'
 import type { AuthEnv } from '../../../shared/auth'
 import { json, withAuth } from '../../../shared/http'
@@ -34,10 +41,41 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
     return json(vehiculoFromAirtable(record.id, record.fields))
   })
 
+/**
+ * Tablas cuyo historial cuelga del vehículo. Todas enlazan por matrícula
+ * (campo `Vehiculo`), no por id de registro — ver shared/types.ts.
+ */
+const TABLAS_HISTORIAL = [
+  TABLES.Averias,
+  TABLES.Mantenimientos,
+  TABLES.Repuestos,
+  TABLES.Itv,
+  TABLES.Seguros,
+  TABLES.Partes,
+]
+
 export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params }) =>
   withAuth(request, env, async (email) => {
     const id = String(params.id)
     await assertVehiculoDelUsuario(env, email, id)
+
+    const propios = await getVehiculosDelUsuario(env, email)
+    const vehiculo = propios.find((v) => v.id === id)
+    if (!vehiculo) return json({ error: 'Vehículo no encontrado' }, 404)
+
+    // Borrado en cascada: como el historial enlaza por matrícula, dejar
+    // los registros huérfanos no solo consumiría cuota de Airtable, sino
+    // que reaparecerían pegados a un vehículo nuevo que reutilizara esa
+    // misma matrícula.
+    const suyo = `{Vehiculo} = '${airtableFormulaString(vehiculo.matricula)}'`
+    let borrados = 0
+    for (const tabla of TABLAS_HISTORIAL) {
+      const registros = await airtableList<Record<string, unknown>>(env, tabla, suyo)
+      if (registros.length > 0) {
+        borrados += await airtableDeleteMany(env, tabla, registros.map((r) => r.id))
+      }
+    }
+
     await airtableDelete(env, TABLES.Vehiculos, id)
-    return json({ ok: true })
+    return json({ ok: true, registrosBorrados: borrados })
   })
