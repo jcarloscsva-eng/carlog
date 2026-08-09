@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { AveriasTab } from '../components/tabs/AveriasTab'
@@ -51,6 +51,11 @@ export function VehiculoDetailPage() {
   // por el id de registro de Airtable — ver shared/types.ts.
   const matricula = vehiculo?.matricula ?? ''
 
+  const navigate = useNavigate()
+  const [borrando, setBorrando] = useState(false)
+  const [confirmacion, setConfirmacion] = useState('')
+  const [borrandoEnCurso, setBorrandoEnCurso] = useState(false)
+  const [errorBorrado, setErrorBorrado] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
@@ -115,6 +120,19 @@ export function VehiculoDetailPage() {
     [vehiculo, misAverias, misMantenimientos, misRepuestos, misItvs, misSeguros],
   )
 
+  async function handleEliminar() {
+    if (!vehiculo) return
+    setBorrandoEnCurso(true)
+    setErrorBorrado(null)
+    try {
+      await api.vehiculos.remove(vehiculo.id)
+      navigate('/')
+    } catch (err) {
+      setErrorBorrado((err as Error).message)
+      setBorrandoEnCurso(false)
+    }
+  }
+
   async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     if (!vehiculo) return
@@ -175,12 +193,25 @@ export function VehiculoDetailPage() {
               )}
             </p>
           </div>
-          <button
-            onClick={() => setEditing(true)}
-            className="relative shrink-0 rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:border-[#e2624f] hover:text-[#e2624f]"
-          >
-            Editar vehículo
-          </button>
+          <div className="relative flex shrink-0 gap-2">
+            <button
+              onClick={() => setEditing(true)}
+              className="rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:border-[#e2624f] hover:text-[#e2624f]"
+            >
+              Editar
+            </button>
+            <button
+              onClick={() => {
+                setBorrando(true)
+                setConfirmacion('')
+                setErrorBorrado(null)
+              }}
+              className="rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#b6a98f] transition hover:border-[#e2624f] hover:text-[#e2624f]"
+              title="Eliminar vehículo"
+            >
+              Eliminar
+            </button>
+          </div>
         </div>
       )}
 
@@ -277,6 +308,59 @@ export function VehiculoDetailPage() {
           reloadPartes={reloadPartes}
         />
       )}
+
+      <Modal
+        open={borrando}
+        onClose={() => setBorrando(false)}
+        title="Eliminar vehículo"
+      >
+        {vehiculo && (
+          <>
+            <p className="mb-3 text-sm text-ink">
+              Vas a eliminar <strong className="text-ink-bright">{vehiculo.marca} {vehiculo.modelo}</strong>{' '}
+              ({vehiculo.matricula}) y todo su historial. <strong className="text-ink-bright">No se
+              puede deshacer.</strong>
+            </p>
+
+            <ul className="entry mb-4 space-y-1 p-3 text-sm text-ink-dim">
+              <li>{misAverias.length} aver{misAverias.length === 1 ? 'ía' : 'ías'}</li>
+              <li>{misMantenimientos.length} mantenimiento{misMantenimientos.length === 1 ? '' : 's'}</li>
+              <li>{misRepuestos.length} repuesto{misRepuestos.length === 1 ? '' : 's'}</li>
+              <li>{misItvs.length} ITV</li>
+              <li>{misSeguros.length} póliza{misSeguros.length === 1 ? '' : 's'} y {partes.filter((p) => p.vehiculoId === matricula).length} parte{partes.filter((p) => p.vehiculoId === matricula).length === 1 ? '' : 's'}</li>
+            </ul>
+
+            <p className="mb-1 text-xs text-ink-dim">
+              Escribe <strong className="text-ink-bright">{vehiculo.matricula}</strong> para confirmar
+            </p>
+            <input
+              className="input mb-4"
+              value={confirmacion}
+              onChange={(e) => setConfirmacion(e.target.value)}
+              placeholder={vehiculo.matricula}
+              autoComplete="off"
+            />
+
+            {errorBorrado && <p className="mb-3 text-sm text-red-700">{errorBorrado}</p>}
+
+            <div className="flex gap-2">
+              <button onClick={() => setBorrando(false)} className="btn-ghost flex-1">
+                Cancelar
+              </button>
+              <button
+                onClick={handleEliminar}
+                disabled={
+                  borrandoEnCurso ||
+                  confirmacion.trim().toUpperCase() !== vehiculo.matricula.trim().toUpperCase()
+                }
+                className="btn-primary flex-1"
+              >
+                {borrandoEnCurso ? 'Eliminando…' : 'Eliminar definitivamente'}
+              </button>
+            </div>
+          </>
+        )}
+      </Modal>
 
       <Modal
         open={editing}

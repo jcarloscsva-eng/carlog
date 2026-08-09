@@ -101,6 +101,31 @@ export async function airtableDelete(
   await airtableFetch(env, `${encodeURIComponent(table)}/${id}`, { method: 'DELETE' })
 }
 
+/**
+ * Borra varios registros de una tabla. Airtable admite hasta 10 por
+ * petición y limita a 5 peticiones por segundo y base, así que los lotes
+ * van en serie y con una pausa: un borrado en cascada puede encadenar
+ * muchas peticiones seguidas.
+ */
+export async function airtableDeleteMany(
+  env: AirtableEnv,
+  table: string,
+  ids: string[],
+): Promise<number> {
+  let borrados = 0
+  for (let i = 0; i < ids.length; i += 10) {
+    const lote = ids.slice(i, i + 10)
+    const params = new URLSearchParams()
+    for (const id of lote) params.append('records[]', id)
+    await airtableFetch(env, `${encodeURIComponent(table)}?${params.toString()}`, {
+      method: 'DELETE',
+    })
+    borrados += lote.length
+    if (i + 10 < ids.length) await new Promise((r) => setTimeout(r, 220))
+  }
+  return borrados
+}
+
 /** Escapes a value for safe interpolation inside an Airtable filterByFormula string literal. */
 export function airtableFormulaString(value: string): string {
   return value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")
