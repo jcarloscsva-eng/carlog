@@ -20,7 +20,24 @@ type Env = AirtableEnv & { SESSION_SECRET: string }
  * vehículo del testigo: nunca el email del propietario ni ningún otro
  * vehículo suyo.
  */
-export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
+/**
+ * Cuánto se guarda la respuesta en la caché del borde. Un historial no
+ * cambia de un minuto para otro, y sin esto cada visita al enlace serían
+ * siete peticiones a Airtable: como el enlace es público, cualquiera (o
+ * un robot) podría repetirlas sin límite y agotar la cuota de la base,
+ * que es compartida con el resto de la aplicación.
+ */
+const CACHE_SEGUNDOS = 300
+
+export const onRequestGet: PagesFunction<Env> = async ({ request, env, waitUntil }) => {
+  const cache = typeof caches !== 'undefined' ? caches.default : undefined
+  const claveCache = new Request(new URL(request.url).toString(), { method: 'GET' })
+
+  if (cache) {
+    const guardada = await cache.match(claveCache)
+    if (guardada) return guardada
+  }
+
   try {
     const token = new URL(request.url).searchParams.get('token')
     if (!token) return json({ error: 'Enlace no válido', codigo: 'sin-token' }, 400)
@@ -75,7 +92,7 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     const seguros = await traer(TABLES.Seguros, seguroFromAirtable)
     const partes = await traer(TABLES.Partes, parteFromAirtable)
 
-    return json({
+    const respuesta = json({
       // Se omite deliberadamente propietarioEmail: quien recibe el enlace
       // no tiene por qué saber de quién es el coche.
       vehiculo: {
@@ -106,6 +123,12 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
       })),
       partes: partes.map((p) => ({ ...p, numeroParte: undefined })),
     })
+
+    // Solo se cachea la respuesta buena: un enlace caducado o un fallo no
+    // deben quedarse pegados en el borde.
+    respuesta.headers.set('Cache-Control', `public, max-age=${CACHE_SEGUNDOS}`)
+    if (cache) waitUntil(cache.put(claveCache, respuesta.clone()))
+    return respuesta
   } catch (err) {
     // Pase lo que pase, el cliente debe recibir JSON: si dejamos escapar la
     // excepción, Cloudflare responde una página HTML y el navegador falla
