@@ -1,4 +1,6 @@
 import { useMemo } from 'react'
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
 import type { Averia, Itv, Mantenimiento, Parte, Repuesto, Seguro, Vehiculo } from '@shared/types'
 import type { ProximaTarea } from '@shared/alerts'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../Icons'
@@ -150,6 +152,66 @@ export function PasaporteTab({
     return [...mapa.entries()]
   }, [eventos])
 
+  function exportarPdf() {
+    const doc = new jsPDF()
+    // Colores de Carlog: el PDF se enseña a terceros (p. ej. al vender el
+    // coche), así que no debería salir con el azul por defecto de jspdf.
+    const estiloTabla = {
+      headStyles: { fillColor: [161, 51, 40] as [number, number, number], textColor: 255 },
+      alternateRowStyles: { fillColor: [251, 247, 238] as [number, number, number] },
+      styles: {
+        textColor: [58, 53, 46] as [number, number, number],
+        lineColor: [222, 210, 184] as [number, number, number],
+      },
+    }
+    const titulo = `${vehiculo.marca} ${vehiculo.modelo}`
+
+    doc.setFontSize(14)
+    doc.setTextColor(161, 51, 40)
+    doc.text(`Carlog — Pasaporte de ${titulo}`, 14, 16)
+    doc.setTextColor(58, 53, 46)
+    doc.setFontSize(10)
+    doc.text(
+      `${vehiculo.matricula} · ${vehiculo.anio} · ${vehiculo.tipo} · ${vehiculo.kmActual.toLocaleString('es-ES')} km`,
+      14,
+      23,
+    )
+    doc.text(
+      `Gasto registrado: ${euros(costeTotal)} · ${intervenciones} ${intervenciones === 1 ? 'intervención' : 'intervenciones'} en taller`,
+      14,
+      29,
+    )
+
+    autoTable(doc, {
+      ...estiloTabla,
+      startY: 36,
+      head: [['Fecha', 'Concepto', 'Detalle', 'Km', 'Importe (€)']],
+      body: eventos.map((e) => [
+        e.fecha,
+        e.titulo,
+        e.detalle ?? '',
+        e.km !== undefined ? e.km.toLocaleString('es-ES') : '',
+        e.importe !== undefined && e.importe > 0 ? e.importe.toFixed(2) : '',
+      ]),
+    })
+
+    if (futuros.length > 0) {
+      autoTable(doc, {
+        ...estiloTabla,
+        head: [['Lo que viene', 'Previsto']],
+        body: futuros.map((f) => [f.titulo, f.detalle]),
+      })
+    }
+
+    doc.text(
+      `Generado el ${new Date().toLocaleDateString('es-ES')} — refleja lo registrado en Carlog.`,
+      14,
+      doc.internal.pageSize.getHeight() - 10,
+    )
+
+    doc.save(`carlog-pasaporte-${vehiculo.matricula.replace(/\s+/g, '')}.pdf`)
+  }
+
   return (
     <div>
       <div className="mb-6 grid gap-3 sm:grid-cols-3">
@@ -171,10 +233,15 @@ export function PasaporteTab({
         </div>
       </div>
 
-      <p className="mb-5 text-xs text-ink-dim">
-        El gasto suma mantenimientos, repuestos, partes y pólizas registradas. Solo refleja lo
-        que has ido apuntando aquí.
-      </p>
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <p className="max-w-xl text-xs text-ink-dim">
+          El gasto suma mantenimientos, repuestos, partes y pólizas registradas. Solo refleja lo
+          que has ido apuntando aquí.
+        </p>
+        <button onClick={exportarPdf} className="btn-ghost shrink-0 text-sm">
+          Exportar PDF
+        </button>
+      </div>
 
       {porAnio.map(([anio, delAnio]) => (
         <div key={anio} className="mb-6">
