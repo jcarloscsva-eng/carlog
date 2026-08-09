@@ -164,6 +164,24 @@ Además de `ALLOWED_EMAILS`, cualquier email dado de alta en la tabla
 **Usuarios**, solo visible para administradores) — así se puede invitar a
 más gente sin volver a tocar la configuración de Cloudflare.
 
+### Enlaces compartidos (pasaporte público)
+
+Desde la pestaña **Pasaporte** de un vehículo se puede generar un enlace de
+solo lectura para enseñar su historial a un tercero (p. ej. al venderlo).
+
+- `POST /api/compartir` (con sesión) firma un testigo con HMAC-SHA256
+  usando `SESSION_SECRET` y devuelve la URL `/p/<token>`. Caducidad a
+  elegir: 7, 30 o 90 días.
+- `GET /api/publico/pasaporte?token=…` es la **única ruta de la API sin
+  sesión**. Solo devuelve el historial del vehículo del testigo: nunca el
+  email del propietario, ni sus otros vehículos, ni el número de póliza o
+  de expediente.
+
+No se guarda nada en Airtable: el enlace se valida por su firma. Como
+contrapartida **no se puede revocar antes de tiempo**, solo caduca. Si
+hiciera falta anular todos los enlaces vigentes de golpe, basta con rotar
+`SESSION_SECRET` (eso cierra también todas las sesiones abiertas).
+
 ## 3. Resend (email)
 
 Crea una cuenta gratuita en https://resend.com, verifica un dominio (o usa
