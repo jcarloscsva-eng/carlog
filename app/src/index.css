@@ -343,23 +343,55 @@ input[type='date']::-webkit-date-and-time-value {
     @apply border-gold text-gold bg-gold-soft;
   }
 
-  /* Variante para el "dark-hero" (fondo oscuro fijo, no depende del tema
-     claro/oscuro del resto de la app) — los tokens is-positive/is-negative
-     tienen bajo contraste ahí en tema claro, así que se fijan los mismos
-     hex que ya usa el resto de la cabecera oscura. */
-  .stamp-badge.on-dark.is-positive {
-    color: #92ac72;
-    background: #92ac7222;
-    border-color: #92ac72;
+  /* Globo de avisos: contador al estilo de las notificaciones de iOS.
+     Amarillo = solo cosas próximas; rojo = algo ya vencido. */
+  .globo-aviso {
+    @apply inline-flex items-center justify-center rounded-full font-semibold text-white;
+    font-family: var(--font-sans);
+    min-width: 1.3rem;
+    height: 1.3rem;
+    padding: 0 0.38rem;
+    font-size: 0.78rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
   }
-  .stamp-badge.on-dark.is-negative {
-    color: #e2624f;
-    background: #e2624f22;
-    border-color: #e2624f;
+  .globo-aviso.is-leve {
+    background: #c9971f;
   }
-  .stamp-badge.on-dark.is-neutral {
-    color: #d1ab52;
-    background: #d1ab5222;
-    border-color: #d1ab52;
+  .globo-aviso.is-grave {
+    background: #c0392b;
+  }
+  /* Superpuesto en la esquina de la tarjeta; el borde lo recorta contra
+     el fondo, como hace iOS sobre el icono de la app. */
+  .globo-aviso.is-esquina {
+    position: absolute;
+    top: -0.5rem;
+    right: -0.5rem;
+    z-index: 2;
+    border: 2px solid var(--color-paper);
+  }
+  /* Sobre la cabecera oscura (color fijo, no sigue el tema claro/oscuro). */
+  .globo-aviso.on-dark {
+    border-color: #241e17;
+  }
+  .globo-aviso.on-dark.is-leve {
+    background: #d9a92e;
+    color: #241e17;
+  }
+  .globo-aviso.on-dark.is-grave {
+    background: #e2624f;
+    color: #241e17;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .globo-aviso.is-leve {
+    background: #d9a92e;
+    color: #1b1712;
+  }
+  .globo-aviso.is-grave {
+    background: #e2624f;
+    color: #1b1712;
   }
 }

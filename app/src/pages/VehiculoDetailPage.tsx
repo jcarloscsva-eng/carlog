@@ -9,11 +9,11 @@ import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
-import { SaludBadge } from '../components/SaludBadge'
+import { GloboAvisos } from '../components/GloboAvisos'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { calcularSaludVehiculo } from '@shared/salud'
+import { contarAvisos } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
@@ -82,12 +82,25 @@ export function VehiculoDetailPage() {
   const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
   const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
 
-  const salud = useMemo(
+  const misRepuestos = useMemo(
+    () => repuestos.filter((r) => r.vehiculoId === matricula),
+    [repuestos, matricula],
+  )
+
+  const avisos = useMemo(
     () =>
       vehiculo
-        ? calcularSaludVehiculo(new Date(), vehiculo, misAverias, misMantenimientos, misItvs, misSeguros)
+        ? contarAvisos(
+            new Date(),
+            vehiculo,
+            misAverias,
+            misMantenimientos,
+            misRepuestos,
+            misItvs,
+            misSeguros,
+          )
         : null,
-    [vehiculo, misAverias, misMantenimientos, misItvs, misSeguros],
+    [vehiculo, misAverias, misMantenimientos, misRepuestos, misItvs, misSeguros],
   )
 
   async function handleEditSubmit(e: FormEvent<HTMLFormElement>) {
@@ -137,7 +150,7 @@ export function VehiculoDetailPage() {
               <h1 className="font-display text-2xl font-semibold">
                 {vehiculo.marca} {vehiculo.modelo}
               </h1>
-              {salud && <SaludBadge salud={salud} dark />}
+              {avisos && <GloboAvisos avisos={avisos} enOscuro />}
             </div>
             <p className="text-sm text-[#b6a98f]">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
