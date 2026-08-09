@@ -4,10 +4,10 @@ import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
-import { SaludBadge } from '../components/SaludBadge'
+import { GloboAvisos } from '../components/GloboAvisos'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { calcularSaludVehiculo } from '@shared/salud'
+import { contarAvisos } from '@shared/avisos'
 import type { Vehiculo, VehiculoTipo } from '@shared/types'
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
@@ -124,6 +124,7 @@ export function VehiculosPage() {
   const { data: itvs } = useCollection(api.itv.list)
   const { data: averias } = useCollection(api.averias.list)
   const { data: seguros } = useCollection(api.seguros.list)
+  const { data: repuestos } = useCollection(api.repuestos.list)
   const [showForm, setShowForm] = useState(false)
   const [infoVehiculo, setInfoVehiculo] = useState<Vehiculo | null>(null)
 
@@ -175,32 +176,32 @@ export function VehiculosPage() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {vehiculos.map((v) => {
-          const salud = calcularSaludVehiculo(
+          const avisos = contarAvisos(
             new Date(),
             v,
             averias.filter((a) => a.vehiculoId === v.matricula),
             mantenimientos.filter((m) => m.vehiculoId === v.matricula),
+            repuestos.filter((r) => r.vehiculoId === v.matricula),
             itvs.filter((i) => i.vehiculoId === v.matricula),
             seguros.filter((s) => s.vehiculoId === v.matricula),
           )
           return (
-            <Link
-              key={v.id}
-              to={`/vehiculos/${v.id}`}
-              className="panel p-4 transition hover:border-stamp/30"
-            >
-              <div className="flex items-start justify-between gap-2">
+            <div key={v.id} className="relative">
+              <GloboAvisos avisos={avisos} esquina />
+              <Link
+                to={`/vehiculos/${v.id}`}
+                className="panel block p-4 transition hover:border-stamp/30"
+              >
                 <p className="font-display text-lg font-medium text-ink-bright">
                   {v.marca} {v.modelo}
                 </p>
-                <SaludBadge salud={salud} />
-              </div>
-              <p className="text-sm text-ink-dim">
-                {v.matricula} · {v.anio} · {v.tipo}
-                {v.fechaCompra && ` · ${calcularAntiguedad(v.fechaCompra, new Date())} años contigo`}
-              </p>
-              <p className="mt-1 text-sm text-stamp">{v.kmActual.toLocaleString('es-ES')} km</p>
-            </Link>
+                <p className="text-sm text-ink-dim">
+                  {v.matricula} · {v.anio} · {v.tipo}
+                  {v.fechaCompra && ` · ${calcularAntiguedad(v.fechaCompra, new Date())} años contigo`}
+                </p>
+                <p className="mt-1 text-sm text-stamp">{v.kmActual.toLocaleString('es-ES')} km</p>
+              </Link>
+            </div>
           )
         })}
       </div>
