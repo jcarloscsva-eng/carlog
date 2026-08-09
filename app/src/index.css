@@ -362,6 +362,11 @@ input[type='date']::-webkit-date-and-time-value {
   .globo-aviso.is-grave {
     background: #c0392b;
   }
+  /* "Todo al día": un tick verde discreto en lugar de nada, para que la
+     ausencia de avisos no se confunda con que la tarjeta no ha cargado. */
+  .globo-aviso.is-ok {
+    background: #5b6b46;
+  }
   /* Superpuesto en la esquina de la tarjeta; el borde lo recorta contra
      el fondo, como hace iOS sobre el icono de la app. */
   .globo-aviso.is-esquina {
@@ -383,6 +388,10 @@ input[type='date']::-webkit-date-and-time-value {
     background: #e2624f;
     color: #241e17;
   }
+  .globo-aviso.on-dark.is-ok {
+    background: #92ac72;
+    color: #241e17;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
@@ -392,6 +401,10 @@ input[type='date']::-webkit-date-and-time-value {
   }
   .globo-aviso.is-grave {
     background: #e2624f;
+    color: #1b1712;
+  }
+  .globo-aviso.is-ok {
+    background: #92ac72;
     color: #1b1712;
   }
 }
