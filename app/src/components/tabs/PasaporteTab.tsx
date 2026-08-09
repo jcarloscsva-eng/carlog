@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Averia, Itv, Mantenimiento, Parte, Repuesto, Seguro, Vehiculo } from '@shared/types'
 import type { ProximaTarea } from '@shared/alerts'
 import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../Icons'
+import { Modal } from '../Modal'
+import { api } from '../../lib/api'
 
 type TipoEvento = 'origen' | 'mantenimiento' | 'repuesto' | 'itv' | 'averia' | 'seguro' | 'parte' | 'futuro'
 
@@ -152,6 +154,39 @@ export function PasaporteTab({
     return [...mapa.entries()]
   }, [eventos])
 
+  // En la vista pública el vehículo llega sin id: ahí no se comparte.
+  const puedeCompartir = Boolean(vehiculo.id)
+  const [compartiendo, setCompartiendo] = useState(false)
+  const [dias, setDias] = useState(30)
+  const [enlace, setEnlace] = useState<string | null>(null)
+  const [generando, setGenerando] = useState(false)
+  const [errorEnlace, setErrorEnlace] = useState<string | null>(null)
+  const [copiado, setCopiado] = useState(false)
+
+  async function generarEnlace() {
+    setGenerando(true)
+    setErrorEnlace(null)
+    try {
+      const res = await api.compartir.crear(vehiculo.id, dias)
+      setEnlace(res.url)
+    } catch (err) {
+      setErrorEnlace((err as Error).message)
+    } finally {
+      setGenerando(false)
+    }
+  }
+
+  async function copiarEnlace() {
+    if (!enlace) return
+    try {
+      await navigator.clipboard.writeText(enlace)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 2000)
+    } catch {
+      setErrorEnlace('No se pudo copiar; selecciona el enlace y cópialo a mano.')
+    }
+  }
+
   function exportarPdf() {
     const doc = new jsPDF()
     // Colores de Carlog: el PDF se enseña a terceros (p. ej. al vender el
@@ -238,10 +273,66 @@ export function PasaporteTab({
           El gasto suma mantenimientos, repuestos, partes y pólizas registradas. Solo refleja lo
           que has ido apuntando aquí.
         </p>
-        <button onClick={exportarPdf} className="btn-ghost shrink-0 text-sm">
-          Exportar PDF
-        </button>
+        <div className="flex shrink-0 gap-2">
+          {puedeCompartir && (
+            <button onClick={() => setCompartiendo(true)} className="btn-ghost text-sm">
+              Compartir
+            </button>
+          )}
+          <button onClick={exportarPdf} className="btn-ghost text-sm">
+            Exportar PDF
+          </button>
+        </div>
       </div>
+
+      <Modal
+        open={compartiendo}
+        onClose={() => {
+          setCompartiendo(false)
+          setEnlace(null)
+          setErrorEnlace(null)
+        }}
+        title="Compartir historial"
+      >
+        <p className="mb-4 text-sm text-ink-dim">
+          Genera un enlace de solo lectura con el historial de este vehículo — útil al venderlo.
+          Quien lo reciba no necesita cuenta y no verá tus datos ni tus otros vehículos.
+        </p>
+
+        {!enlace && (
+          <>
+            <label className="mb-1 block text-xs text-ink-dim">Válido durante</label>
+            <select
+              className="input mb-4"
+              value={dias}
+              onChange={(e) => setDias(Number(e.target.value))}
+            >
+              <option value={7}>7 días</option>
+              <option value={30}>30 días</option>
+              <option value={90}>90 días</option>
+            </select>
+            <button onClick={generarEnlace} disabled={generando} className="btn-primary w-full">
+              {generando ? 'Generando…' : 'Generar enlace'}
+            </button>
+          </>
+        )}
+
+        {enlace && (
+          <>
+            <p className="mb-1 text-xs text-ink-dim">Enlace generado</p>
+            <input readOnly value={enlace} className="input mb-3 font-mono text-xs" onFocus={(e) => e.currentTarget.select()} />
+            <button onClick={copiarEnlace} className="btn-primary w-full">
+              {copiado ? 'Copiado' : 'Copiar enlace'}
+            </button>
+            <p className="mt-3 text-xs text-ink-dim">
+              Caduca a los {dias} días. No se puede anular antes de tiempo, así que comparte solo
+              con quien quieras.
+            </p>
+          </>
+        )}
+
+        {errorEnlace && <p className="mt-3 text-sm text-red-700">{errorEnlace}</p>}
+      </Modal>
 
       {porAnio.map(([anio, delAnio]) => (
         <div key={anio} className="mb-6">
