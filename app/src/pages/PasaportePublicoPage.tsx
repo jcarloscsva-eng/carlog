@@ -21,16 +21,42 @@ interface PasaportePublico {
 export function PasaportePublicoPage() {
   const { token } = useParams<{ token: string }>()
   const [datos, setDatos] = useState<PasaportePublico | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  // `culpaDelEnlace` distingue "el enlace ya no sirve" de "el servidor ha
+  // fallado": en el segundo caso pedir un enlace nuevo no arregla nada.
+  const [error, setError] = useState<{ mensaje: string; culpaDelEnlace: boolean } | null>(null)
 
   useEffect(() => {
     fetch(`/api/publico/pasaporte?token=${encodeURIComponent(token ?? '')}`)
       .then(async (res) => {
-        const body = await res.json()
-        if (!res.ok) throw new Error(body.error ?? 'No se pudo abrir el enlace')
+        // Si algo va mal en el servidor la respuesta puede no ser JSON (una
+        // página de error). Sin esto, el visitante veía el error crudo del
+        // parser en vez de un mensaje entendible.
+        const texto = await res.text()
+        let body: { error?: string } & Partial<PasaportePublico>
+        try {
+          body = JSON.parse(texto)
+        } catch {
+          setError({
+            mensaje: 'No se pudo cargar el historial. Inténtalo de nuevo en un momento.',
+            culpaDelEnlace: false,
+          })
+          return
+        }
+        if (!res.ok) {
+          setError({
+            mensaje: body.error ?? 'No se pudo abrir el enlace',
+            culpaDelEnlace: res.status === 400 || res.status === 404,
+          })
+          return
+        }
         setDatos(body as PasaportePublico)
       })
-      .catch((err: Error) => setError(err.message))
+      .catch(() =>
+        setError({
+          mensaje: 'No se pudo conectar. Comprueba tu conexión e inténtalo de nuevo.',
+          culpaDelEnlace: false,
+        }),
+      )
   }, [token])
 
   return (
@@ -60,10 +86,12 @@ export function PasaportePublicoPage() {
       <main className="mx-auto max-w-4xl px-4 py-6">
         {error && (
           <div className="panel p-6 text-center">
-            <p className="font-display text-lg text-ink-bright">{error}</p>
-            <p className="mt-1 text-sm text-ink-dim">
-              Pide a quien te lo envió que genere un enlace nuevo.
-            </p>
+            <p className="font-display text-lg text-ink-bright">{error.mensaje}</p>
+            {error.culpaDelEnlace && (
+              <p className="mt-1 text-sm text-ink-dim">
+                Pide a quien te lo envió que genere un enlace nuevo.
+              </p>
+            )}
           </div>
         )}
 
