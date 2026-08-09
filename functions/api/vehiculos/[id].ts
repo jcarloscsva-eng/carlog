@@ -70,7 +70,21 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params
     const suyo = `{Vehiculo} = '${airtableFormulaString(vehiculo.matricula)}'`
     let borrados = 0
     for (const tabla of TABLAS_HISTORIAL) {
-      const registros = await airtableList<Record<string, unknown>>(env, tabla, suyo)
+      let registros
+      try {
+        registros = await airtableList<Record<string, unknown>>(env, tabla, suyo)
+      } catch (err) {
+        // Si no podemos leer una tabla no sabemos qué habría que borrar en
+        // ella, así que abortamos ANTES de tocar el vehículo: dejarlo a
+        // medias crearía justo los huérfanos que este borrado evita.
+        console.error(`No se pudo leer la tabla ${tabla} al eliminar el vehículo`, err)
+        return json(
+          {
+            error: `No se pudo acceder a la tabla "${tabla}" en Airtable, así que no se ha borrado nada. Comprueba que existe y vuelve a intentarlo.`,
+          },
+          502,
+        )
+      }
       if (registros.length > 0) {
         borrados += await airtableDeleteMany(env, tabla, registros.map((r) => r.id))
       }

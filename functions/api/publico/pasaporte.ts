@@ -53,10 +53,20 @@ export const onRequestGet: PagesFunction<Env> = async ({ request, env }) => {
     // (más la del vehículo) se pasaba del límite, Airtable devolvía 429 y
     // la función caía con una página de error HTML que el navegador no
     // podía interpretar como JSON.
-    const traer = <T>(tabla: string, mapear: (id: string, f: Record<string, unknown>) => T) =>
-      airtableList<Record<string, unknown>>(env, tabla, soloDeEsteVehiculo).then((rs) =>
-        rs.map((r) => mapear(r.id, r.fields)),
-      )
+    // Si una tabla no es accesible (p. ej. aún no creada en la base), se
+    // sirve el resto del historial en vez de dejar al visitante sin nada.
+    const traer = async <T>(
+      tabla: string,
+      mapear: (id: string, f: Record<string, unknown>) => T,
+    ): Promise<T[]> => {
+      try {
+        const rs = await airtableList<Record<string, unknown>>(env, tabla, soloDeEsteVehiculo)
+        return rs.map((r) => mapear(r.id, r.fields))
+      } catch (err) {
+        console.error(`No se pudo leer la tabla ${tabla} para el pasaporte público`, err)
+        return []
+      }
+    }
 
     const averias = await traer(TABLES.Averias, averiaFromAirtable)
     const mantenimientos = await traer(TABLES.Mantenimientos, mantenimientoFromAirtable)

@@ -31,7 +31,12 @@ async function airtableFetch<T>(
 
   if (!res.ok) {
     const body = await res.text()
-    throw new Error(`Airtable request failed (${res.status}): ${body}`)
+    // El nombre de la tabla en el mensaje: un 403
+    // INVALID_PERMISSIONS_OR_MODEL_NOT_FOUND normalmente significa que esa
+    // tabla no existe en la base, y sin saber cuál es no hay forma de
+    // arreglarlo.
+    const tabla = decodeURIComponent(path.split('?')[0].split('/')[0])
+    throw new Error(`Airtable falló (${res.status}) en la tabla "${tabla}": ${body}`)
   }
 
   return res.json() as Promise<T>
