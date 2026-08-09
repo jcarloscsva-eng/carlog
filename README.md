@@ -177,6 +177,13 @@ solo lectura para enseñar su historial a un tercero (p. ej. al venderlo).
   email del propietario, ni sus otros vehículos, ni el número de póliza o
   de expediente.
 
+La respuesta se cachea 5 minutos en el borde de Cloudflare. Sin eso, cada
+visita al enlace serían siete peticiones a Airtable y, al ser público,
+cualquiera (o un robot) podría repetirlas hasta agotar el límite de la
+base — que es el mismo que usa el resto de la aplicación. Como
+contrapartida, un cambio en el historial puede tardar hasta 5 minutos en
+verse en el enlace compartido. Los errores no se cachean.
+
 No se guarda nada en Airtable: el enlace se valida por su firma. Como
 contrapartida **no se puede revocar antes de tiempo**, solo caduca. Si
 hiciera falta anular todos los enlaces vigentes de golpe, basta con rotar
