@@ -104,13 +104,6 @@ export const api = {
       request<UsuarioPermitido>('/admin/usuarios', { method: 'POST', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/admin/usuarios/${id}`, { method: 'DELETE' }),
   },
-  compartir: {
-    crear: (vehiculoId: string, dias: number) =>
-      request<{ url: string; caducidad: string; dias: number }>('/compartir', {
-        method: 'POST',
-        body: JSON.stringify({ vehiculoId, dias }),
-      }),
-  },
   vehiculoData: {
     marcas: () => request<string[]>('/vehiculo-data/marcas'),
     modelos: (marca: string) =>
