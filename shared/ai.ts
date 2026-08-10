@@ -11,7 +11,11 @@ export interface AiEnv {
   AI: Ai
 }
 
-const MODELO = '@cf/meta/llama-3.1-8b-instruct'
+// @cf/meta/llama-3.1-8b-instruct se descatalogó (30 may 2026). Sucesor
+// vigente en el catálogo de Workers AI a fecha de este comentario.
+// Si vuelve a quedar obsoleto, la lista actual está en
+// https://developers.cloudflare.com/workers-ai/models/
+const MODELO = '@cf/meta/llama-4-scout-17b-16e-instruct'
 
 export class IaNoDisponibleError extends Error {
   constructor() {
