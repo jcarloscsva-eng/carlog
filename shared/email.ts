@@ -7,6 +7,16 @@ export interface EmailEnv {
   RESEND_API_KEY: string
 }
 
+/** Escapa texto para interpolarlo dentro de un email HTML sin que rompa el marcado. */
+export function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 export async function sendEmail(
   env: EmailEnv,
   to: string,

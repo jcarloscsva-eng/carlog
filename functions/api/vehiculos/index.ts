@@ -2,7 +2,7 @@ import { airtableCreate, type AirtableEnv } from '../../../shared/airtable'
 import { TABLES, vehiculoFromAirtable, vehiculoToAirtable } from '../../../shared/airtable-mappers'
 import type { AuthEnv } from '../../../shared/auth'
 import { json, withAuth } from '../../../shared/http'
-import { getVehiculosDelUsuario } from '../../../shared/ownership'
+import { existeOtroVehiculoConMatricula, getVehiculosDelUsuario } from '../../../shared/ownership'
 import type { Vehiculo } from '../../../shared/types'
 
 type Env = AirtableEnv & AuthEnv
@@ -17,10 +17,9 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) =>
   withAuth(request, env, async (email) => {
     const body = (await request.json()) as Omit<Vehiculo, 'id' | 'propietarioEmail'>
 
-    const propios = await getVehiculosDelUsuario(env, email)
     const matriculaNueva = body.matricula.trim().toUpperCase()
-    if (propios.some((v) => v.matricula.trim().toUpperCase() === matriculaNueva)) {
-      return json({ error: 'Ya tienes un vehículo con esa matrícula' }, 400)
+    if (await existeOtroVehiculoConMatricula(env, matriculaNueva)) {
+      return json({ error: 'Ya existe un vehículo registrado con esa matrícula' }, 400)
     }
 
     const record = await airtableCreate(
