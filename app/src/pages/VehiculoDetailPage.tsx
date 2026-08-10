@@ -57,6 +57,7 @@ export function VehiculoDetailPage() {
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [focusKm, setFocusKm] = useState(false)
+  const [tareasAbiertas, setTareasAbiertas] = useState(false)
 
   // Al llegar con ?editarKm=1 (p. ej. desde el aviso de kilometraje
   // desactualizado), abre directamente el formulario de edición con el
@@ -83,6 +84,11 @@ export function VehiculoDetailPage() {
     () => (vehiculo ? calcularProximasTareas(new Date(), vehiculo, misElementos, misItvs) : []),
     [vehiculo, misElementos, misItvs],
   )
+  // Colapsada por defecto cuando no hay prisa por nada: con todo al día no
+  // hace falta ocupar espacio en pantalla, pero en cuanto algo se pone
+  // urgente se despliega sola aunque el usuario no la haya tocado.
+  const hayTareasUrgentes = proximasTareas.some((t) => t.urgente)
+  const mostrarTareas = tareasAbiertas || hayTareasUrgentes
 
   const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
   const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
@@ -213,25 +219,46 @@ export function VehiculoDetailPage() {
       {/* El Pasaporte ya termina con "Lo que viene", así que aquí sobraría. */}
       {vehiculo && tab !== 'Pasaporte' && (
         <div className="mb-6">
-          <span className="eyebrow">Próximas tareas</span>
-          <ul className="mt-2 space-y-2">
-            {proximasTareas.map((t) => (
-              <li key={`${t.tipo}-${t.titulo}`} className="entry flex items-center justify-between p-3">
-                <span className="text-sm text-ink">
-                  {t.tipo === 'ITV' ? 'ITV' : t.titulo}
-                </span>
-                <span className={`text-xs ${t.urgente ? 'font-medium text-amber-700' : 'text-ink-dim'}`}>
-                  {t.fechaObjetivo && t.fechaObjetivo.toLocaleDateString('es-ES')}
-                  {t.fechaObjetivo && t.kmObjetivo ? ' · ' : ''}
-                  {t.kmObjetivo && `${t.kmObjetivo.toLocaleString('es-ES')} km`}
-                </span>
-              </li>
-            ))}
-          </ul>
-          {proximasTareas.length <= 1 && (
-            <p className="mt-2 text-xs text-ink-dim">
-              Añade un intervalo (km o meses) a un mantenimiento para que también aparezca aquí.
-            </p>
+          <button
+            onClick={() => setTareasAbiertas((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 text-left"
+          >
+            <span className="eyebrow">Próximas tareas</span>
+            <span className="flex items-center gap-1.5 text-xs text-ink-dim">
+              {!hayTareasUrgentes && (mostrarTareas ? 'Todo al día' : 'Todo al día — ver detalle')}
+              <svg
+                viewBox="0 0 24 24"
+                className={`h-3.5 w-3.5 shrink-0 transition-transform ${mostrarTareas ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </span>
+          </button>
+          {mostrarTareas && (
+            <>
+              <ul className="mt-2 space-y-2">
+                {proximasTareas.map((t) => (
+                  <li key={`${t.tipo}-${t.titulo}`} className="entry flex items-center justify-between p-3">
+                    <span className="text-sm text-ink">
+                      {t.tipo === 'ITV' ? 'ITV' : t.titulo}
+                    </span>
+                    <span className={`text-xs ${t.urgente ? 'font-medium text-amber-700' : 'text-ink-dim'}`}>
+                      {t.fechaObjetivo && t.fechaObjetivo.toLocaleDateString('es-ES')}
+                      {t.fechaObjetivo && t.kmObjetivo ? ' · ' : ''}
+                      {t.kmObjetivo && `${t.kmObjetivo.toLocaleString('es-ES')} km`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              {proximasTareas.length <= 1 && (
+                <p className="mt-2 text-xs text-ink-dim">
+                  Añade un intervalo (km o meses) a un mantenimiento para que también aparezca aquí.
+                </p>
+              )}
+            </>
           )}
         </div>
       )}
