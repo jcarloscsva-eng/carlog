@@ -3,28 +3,26 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { AveriasTab } from '../components/tabs/AveriasTab'
-import { MantenimientosTab } from '../components/tabs/MantenimientosTab'
-import { RepuestosTab } from '../components/tabs/RepuestosTab'
+import { ElementosTab } from '../components/tabs/ElementosTab'
 import { ItvTab } from '../components/tabs/ItvTab'
 import { SeguroTab } from '../components/tabs/SeguroTab'
 import { PasaporteTab } from '../components/tabs/PasaporteTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
 import { GloboAvisos } from '../components/GloboAvisos'
-import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../components/Icons'
+import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconVehiculo } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
 import { contarAvisos } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
-const TABS = ['Pasaporte', 'Averías', 'Mantenimientos', 'Repuestos', 'ITV', 'Seguro'] as const
+const TABS = ['Pasaporte', 'Averías', 'Elementos', 'ITV', 'Seguro'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_ICONS: Record<Tab, typeof IconAveria> = {
   Pasaporte: IconVehiculo,
   Averías: IconAveria,
-  Mantenimientos: IconMantenimiento,
-  Repuestos: IconRepuesto,
+  Elementos: IconMantenimiento,
   ITV: IconItv,
   Seguro: IconSeguro,
 }
@@ -39,9 +37,8 @@ export function VehiculoDetailPage() {
 
   const { data: vehiculos, reload: reloadVehiculos } = useCollection(api.vehiculos.list)
   const { data: averias, loading: cargandoAverias, reload: reloadAverias } = useCollection(api.averias.list)
-  const { data: mantenimientos, loading: cargandoMantenimientos, reload: reloadMantenimientos } =
-    useCollection(api.mantenimientos.list)
-  const { data: repuestos, loading: cargandoRepuestos, reload: reloadRepuestos } = useCollection(api.repuestos.list)
+  const { data: elementos, loading: cargandoElementos, reload: reloadElementos } =
+    useCollection(api.elementos.list)
   const { data: itvs, loading: cargandoItvs, reload: reloadItv } = useCollection(api.itv.list)
   const { data: seguros, loading: cargandoSeguros, reload: reloadSeguros } = useCollection(api.seguros.list)
   const { data: partes, reload: reloadPartes } = useCollection(api.partes.list)
@@ -76,31 +73,25 @@ export function VehiculoDetailPage() {
     }
   }, [vehiculo, searchParams, setSearchParams])
 
-  const misMantenimientos = useMemo(
-    () => mantenimientos.filter((m) => m.vehiculoId === matricula),
-    [mantenimientos, matricula],
+  const misElementos = useMemo(
+    () => elementos.filter((e) => e.vehiculoId === matricula),
+    [elementos, matricula],
   )
   const misItvs = useMemo(() => itvs.filter((i) => i.vehiculoId === matricula), [itvs, matricula])
 
   const proximasTareas = useMemo(
-    () => (vehiculo ? calcularProximasTareas(new Date(), vehiculo, misMantenimientos, misItvs) : []),
-    [vehiculo, misMantenimientos, misItvs],
+    () => (vehiculo ? calcularProximasTareas(new Date(), vehiculo, misElementos, misItvs) : []),
+    [vehiculo, misElementos, misItvs],
   )
 
   const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
   const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
 
-  const misRepuestos = useMemo(
-    () => repuestos.filter((r) => r.vehiculoId === matricula),
-    [repuestos, matricula],
-  )
-
-  // Hasta que no están las cinco colecciones, el recuento sería falso
+  // Hasta que no están las cuatro colecciones, el recuento sería falso
   // (ver VehiculosPage): mejor no pintar el globo que pintar uno erróneo.
   const avisosListos =
     !cargandoAverias &&
-    !cargandoMantenimientos &&
-    !cargandoRepuestos &&
+    !cargandoElementos &&
     !cargandoItvs &&
     !cargandoSeguros
 
@@ -111,13 +102,12 @@ export function VehiculoDetailPage() {
             new Date(),
             vehiculo,
             misAverias,
-            misMantenimientos,
-            misRepuestos,
+            misElementos,
             misItvs,
             misSeguros,
           )
         : null,
-    [vehiculo, misAverias, misMantenimientos, misRepuestos, misItvs, misSeguros],
+    [vehiculo, misAverias, misElementos, misItvs, misSeguros],
   )
 
   async function handleEliminar() {
@@ -265,8 +255,7 @@ export function VehiculoDetailPage() {
         <PasaporteTab
           vehiculo={vehiculo}
           averias={misAverias}
-          mantenimientos={misMantenimientos}
-          repuestos={misRepuestos}
+          elementos={misElementos}
           itvs={misItvs}
           seguros={misSeguros}
           partes={partes.filter((p) => p.vehiculoId === matricula)}
@@ -282,18 +271,12 @@ export function VehiculoDetailPage() {
           reload={reloadAverias}
         />
       )}
-      {tab === 'Mantenimientos' && (
-        <MantenimientosTab
+      {tab === 'Elementos' && vehiculo && (
+        <ElementosTab
           vehiculoId={matricula}
-          mantenimientos={misMantenimientos}
-          reload={reloadMantenimientos}
-        />
-      )}
-      {tab === 'Repuestos' && (
-        <RepuestosTab
-          vehiculoId={matricula}
-          repuestos={repuestos.filter((r) => r.vehiculoId === matricula)}
-          reload={reloadRepuestos}
+          kmActual={vehiculo.kmActual}
+          elementos={misElementos}
+          reload={reloadElementos}
         />
       )}
       {tab === 'ITV' && (
@@ -324,8 +307,7 @@ export function VehiculoDetailPage() {
 
             <ul className="entry mb-4 space-y-1 p-3 text-sm text-ink-dim">
               <li>{misAverias.length} aver{misAverias.length === 1 ? 'ía' : 'ías'}</li>
-              <li>{misMantenimientos.length} mantenimiento{misMantenimientos.length === 1 ? '' : 's'}</li>
-              <li>{misRepuestos.length} repuesto{misRepuestos.length === 1 ? '' : 's'}</li>
+              <li>{misElementos.length} elemento{misElementos.length === 1 ? '' : 's'} de mantenimiento</li>
               <li>{misItvs.length} ITV</li>
               <li>{misSeguros.length} póliza{misSeguros.length === 1 ? '' : 's'} y {partes.filter((p) => p.vehiculoId === matricula).length} parte{partes.filter((p) => p.vehiculoId === matricula).length === 1 ? '' : 's'}</li>
             </ul>

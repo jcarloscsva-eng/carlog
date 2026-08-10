@@ -1,12 +1,11 @@
 import type {
   AlertaEnviada,
   Averia,
+  Elemento,
   Itv,
   LoginCode,
-  Mantenimiento,
   Parte,
   PushSubscriptionRecord,
-  Repuesto,
   Seguro,
   UsuarioPermitido,
   Vehiculo,
@@ -15,8 +14,7 @@ import type {
 export const TABLES = {
   Vehiculos: 'Vehiculos',
   Averias: 'Averias',
-  Mantenimientos: 'Mantenimientos',
-  Repuestos: 'Repuestos',
+  Elementos: 'Elementos',
   Itv: 'ITV',
   Seguros: 'Seguros',
   Partes: 'Partes',
@@ -82,61 +80,34 @@ export function averiaToAirtable(a: Omit<Averia, 'id'>): AirtableFields {
   }
 }
 
-// --- Mantenimientos --------------------------------------------------------
+// --- Elementos --------------------------------------------------------
 
-export function mantenimientoFromAirtable(id: string, fields: AirtableFields): Mantenimiento {
+export function elementoFromAirtable(id: string, fields: AirtableFields): Elemento {
   return {
     id,
     vehiculoId: String(fields.Vehiculo ?? ''),
+    tipo: String(fields.Tipo ?? ''),
     fecha: String(fields.Fecha ?? ''),
     km: Number(fields.Km ?? 0),
     precio: Number(fields.Precio ?? 0),
     tienda: String(fields.Tienda ?? ''),
-    elementos: String(fields.Elementos ?? ''),
     intervaloKm: fields.Intervalo_Km ? Number(fields.Intervalo_Km) : undefined,
     intervaloMeses: fields.Intervalo_Meses ? Number(fields.Intervalo_Meses) : undefined,
+    visitaId: fields.Visita_Id ? String(fields.Visita_Id) : undefined,
   }
 }
 
-export function mantenimientoToAirtable(m: Omit<Mantenimiento, 'id'>): AirtableFields {
+export function elementoToAirtable(e: Omit<Elemento, 'id'>): AirtableFields {
   return {
-    Vehiculo: m.vehiculoId,
-    Fecha: m.fecha,
-    Km: m.km,
-    Precio: m.precio,
-    Tienda: m.tienda,
-    Elementos: m.elementos,
-    Intervalo_Km: m.intervaloKm ?? null,
-    Intervalo_Meses: m.intervaloMeses ?? null,
-  }
-}
-
-// --- Repuestos -----------------------------------------------------------
-
-export function repuestoFromAirtable(id: string, fields: AirtableFields): Repuesto {
-  return {
-    id,
-    vehiculoId: String(fields.Vehiculo ?? ''),
-    tipoRepuesto: (fields.Tipo_Repuesto as Repuesto['tipoRepuesto']) ?? 'Otro',
-    fecha: String(fields.Fecha ?? ''),
-    km: Number(fields.Km ?? 0),
-    precio: Number(fields.Precio ?? 0),
-    tienda: String(fields.Tienda ?? ''),
-    vidaUtilKm: fields.Vida_Util_Km ? Number(fields.Vida_Util_Km) : undefined,
-    vidaUtilAnios: fields['Vida_Util_Años'] ? Number(fields['Vida_Util_Años']) : undefined,
-  }
-}
-
-export function repuestoToAirtable(r: Omit<Repuesto, 'id'>): AirtableFields {
-  return {
-    Vehiculo: r.vehiculoId,
-    Tipo_Repuesto: r.tipoRepuesto,
-    Fecha: r.fecha,
-    Km: r.km,
-    Precio: r.precio,
-    Tienda: r.tienda,
-    Vida_Util_Km: r.vidaUtilKm ?? null,
-    'Vida_Util_Años': r.vidaUtilAnios ?? null,
+    Vehiculo: e.vehiculoId,
+    Tipo: e.tipo,
+    Fecha: e.fecha,
+    Km: e.km,
+    Precio: e.precio,
+    Tienda: e.tienda,
+    Intervalo_Km: e.intervaloKm ?? null,
+    Intervalo_Meses: e.intervaloMeses ?? null,
+    Visita_Id: e.visitaId || null,
   }
 }
 
@@ -250,7 +221,7 @@ export function pushSubscriptionToAirtable(
 export function alertaEnviadaFromAirtable(id: string, fields: AirtableFields): AlertaEnviada {
   return {
     id,
-    tipo: (fields.Tipo as AlertaEnviada['tipo']) ?? 'Mantenimiento',
+    tipo: (fields.Tipo as AlertaEnviada['tipo']) ?? 'Elemento',
     referenciaId: String(fields.Referencia_Id ?? ''),
     fechaEnviada: String(fields.Fecha_Enviada ?? ''),
   }

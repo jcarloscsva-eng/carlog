@@ -1,7 +1,7 @@
 # Carlog
 
-Gestión de mantenimiento de vehículos: averías, mantenimientos, repuestos,
-ITV, alertas por email/push y reportes de gasto. PWA instalable, backend en
+Gestión de mantenimiento de vehículos: averías, elementos con salud e
+intervalos propios, ITV, alertas por email/push y reportes de gasto. PWA instalable, backend en
 Cloudflare Pages Functions, datos en Airtable, login propio con código por
 email (sin depender de Cloudflare Access ni de tarjeta de crédito).
 
@@ -44,29 +44,27 @@ son los que usa el código):
 | Descripcion | Long text |
 | Estado | Single select: `Pendiente`, `Resuelta` |
 
-**Mantenimientos**
+**Elementos**
+
+Sustituye a las antiguas tablas "Mantenimientos" y "Repuestos" (eran el
+mismo concepto — algo del coche que se cambia y hay que volver a cambiar
+más adelante — con dos vocabularios distintos). Cada elemento (aceite,
+filtro de aceite, batería, neumáticos, pastillas de freno…) lleva su
+propio intervalo y por tanto su propia alerta; varios elementos cambiados
+en la misma visita al taller comparten `Visita_Id` solo para poder
+agruparlos en la interfaz, no para el cálculo de alertas.
+
 | Campo | Tipo |
 |---|---|
-| Vehiculo | Link to Vehiculos |
+| Vehiculo | Single line text (matrícula) |
+| Tipo | Single line text (p. ej. `Aceite`, `Batería`, `Neumáticos`…) |
 | Fecha | Date |
 | Km | Number |
 | Precio | Number (decimal) |
 | Tienda | Single line text |
-| Elementos | Single line text |
 | Intervalo_Km | Number (opcional, para alertas recurrentes) |
 | Intervalo_Meses | Number (opcional, para alertas recurrentes) |
-
-**Repuestos**
-| Campo | Tipo |
-|---|---|
-| Vehiculo | Link to Vehiculos |
-| Tipo_Repuesto | Single select: `Neumáticos`, `Batería`, `Frenos`, `Correa de distribución`, `Filtros`, `Otro` |
-| Fecha | Date |
-| Km | Number |
-| Precio | Number (decimal) |
-| Tienda | Single line text |
-| Vida_Util_Km | Number (opcional) |
-| Vida_Util_Años | Number (opcional) |
+| Visita_Id | Single line text (opcional, agrupa elementos de una misma visita) |
 
 **ITV**
 | Campo | Tipo |
@@ -111,7 +109,7 @@ son los que usa el código):
 **AlertasEnviadas**
 | Campo | Tipo |
 |---|---|
-| Tipo | Single select: `Mantenimiento`, `Repuesto`, `ITV` |
+| Tipo | Single select: `Elemento`, `ITV` |
 | Referencia_Id | Single line text |
 | Fecha_Enviada | Date |
 

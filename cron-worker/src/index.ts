@@ -3,15 +3,15 @@ import { airtableCreate, airtableDelete, airtableList, type AirtableEnv } from '
 import {
   TABLES,
   alertaEnviadaToAirtable,
+  elementoFromAirtable,
   itvFromAirtable,
-  mantenimientoFromAirtable,
   pushSubscriptionFromAirtable,
-  repuestoFromAirtable,
   vehiculoFromAirtable,
 } from '../../shared/airtable-mappers'
 import { calcularAlertasPendientes } from '../../shared/alerts'
+import { intervaloSugerido } from '../../shared/elementos-catalogo'
 import { sendAlertEmail, sendWebPush, type NotificationsEnv } from '../../shared/notifications'
-import type { Itv, Mantenimiento, Repuesto, Vehiculo } from '../../shared/types'
+import type { Elemento, Itv, Vehiculo } from '../../shared/types'
 
 export interface Env extends AirtableEnv, NotificationsEnv {
   APP_URL: string
@@ -19,40 +19,22 @@ export interface Env extends AirtableEnv, NotificationsEnv {
   CRON_DEBUG_TOKEN?: string
 }
 
-function ultimosPorVehiculoConIntervalo(mantenimientos: Mantenimiento[]): Map<string, Mantenimiento[]> {
-  const map = new Map<string, Map<string, Mantenimiento>>()
+/** Último elemento de cada tipo, por vehículo, entre los que tienen intervalo (propio o sugerido por su catálogo). */
+function ultimosElementosPorTipo(elementos: Elemento[]): Map<string, Elemento[]> {
+  const map = new Map<string, Map<string, Elemento>>()
 
-  for (const m of mantenimientos) {
-    if (!m.intervaloKm && !m.intervaloMeses) continue
-    const porVehiculo = map.get(m.vehiculoId) ?? new Map<string, Mantenimiento>()
-    const existente = porVehiculo.get(m.elementos)
-    if (!existente || new Date(m.fecha) > new Date(existente.fecha)) {
-      porVehiculo.set(m.elementos, m)
+  for (const e of elementos) {
+    const tieneIntervalo = e.intervaloKm || e.intervaloMeses || intervaloSugerido(e.tipo).km || intervaloSugerido(e.tipo).meses
+    if (!tieneIntervalo) continue
+    const porVehiculo = map.get(e.vehiculoId) ?? new Map<string, Elemento>()
+    const existente = porVehiculo.get(e.tipo)
+    if (!existente || new Date(e.fecha) > new Date(existente.fecha)) {
+      porVehiculo.set(e.tipo, e)
     }
-    map.set(m.vehiculoId, porVehiculo)
+    map.set(e.vehiculoId, porVehiculo)
   }
 
-  const resultado = new Map<string, Mantenimiento[]>()
-  for (const [vehiculoId, porTipo] of map) {
-    resultado.set(vehiculoId, [...porTipo.values()])
-  }
-  return resultado
-}
-
-function ultimosRepuestoPorTipo(repuestos: Repuesto[]): Map<string, Repuesto[]> {
-  const map = new Map<string, Map<string, Repuesto>>()
-
-  for (const r of repuestos) {
-    if (!r.vidaUtilKm && !r.vidaUtilAnios) continue
-    const porVehiculo = map.get(r.vehiculoId) ?? new Map<string, Repuesto>()
-    const existente = porVehiculo.get(r.tipoRepuesto)
-    if (!existente || new Date(r.fecha) > new Date(existente.fecha)) {
-      porVehiculo.set(r.tipoRepuesto, r)
-    }
-    map.set(r.vehiculoId, porVehiculo)
-  }
-
-  const resultado = new Map<string, Repuesto[]>()
+  const resultado = new Map<string, Elemento[]>()
   for (const [vehiculoId, porTipo] of map) {
     resultado.set(vehiculoId, [...porTipo.values()])
   }
@@ -71,19 +53,17 @@ function ultimaItvPorVehiculo(itvs: Itv[]): Map<string, Itv | undefined> {
 }
 
 async function ejecutarRevisionDeAlertas(env: Env): Promise<void> {
-  const [vehiculosRaw, mantenimientosRaw, repuestosRaw, itvRaw, alertasEnviadasRaw, suscripcionesRaw] =
+  const [vehiculosRaw, elementosRaw, itvRaw, alertasEnviadasRaw, suscripcionesRaw] =
     await Promise.all([
       airtableList<Record<string, unknown>>(env, TABLES.Vehiculos),
-      airtableList<Record<string, unknown>>(env, TABLES.Mantenimientos),
-      airtableList<Record<string, unknown>>(env, TABLES.Repuestos),
+      airtableList<Record<string, unknown>>(env, TABLES.Elementos),
       airtableList<Record<string, unknown>>(env, TABLES.Itv),
       airtableList<Record<string, unknown>>(env, TABLES.AlertasEnviadas),
       airtableList<Record<string, unknown>>(env, TABLES.PushSubscriptions),
     ])
 
   const vehiculos: Vehiculo[] = vehiculosRaw.map((r) => vehiculoFromAirtable(r.id, r.fields))
-  const mantenimientos = mantenimientosRaw.map((r) => mantenimientoFromAirtable(r.id, r.fields))
-  const repuestos = repuestosRaw.map((r) => repuestoFromAirtable(r.id, r.fields))
+  const elementos = elementosRaw.map((r) => elementoFromAirtable(r.id, r.fields))
   const itvs = itvRaw.map((r) => itvFromAirtable(r.id, r.fields))
   const suscripciones = suscripcionesRaw.map((r) => pushSubscriptionFromAirtable(r.id, r.fields))
 
@@ -94,8 +74,7 @@ async function ejecutarRevisionDeAlertas(env: Env): Promise<void> {
   const alertas = calcularAlertasPendientes(
     new Date(),
     vehiculos,
-    ultimosPorVehiculoConIntervalo(mantenimientos),
-    ultimosRepuestoPorTipo(repuestos),
+    ultimosElementosPorTipo(elementos),
     ultimaItvPorVehiculo(itvs),
   ).filter((a) => !yaEnviadas.has(`${a.tipo}:${a.referenciaId}`))
 

@@ -47,8 +47,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
  */
 const TABLAS_HISTORIAL = [
   TABLES.Averias,
-  TABLES.Mantenimientos,
-  TABLES.Repuestos,
+  TABLES.Elementos,
   TABLES.Itv,
   TABLES.Seguros,
   TABLES.Partes,

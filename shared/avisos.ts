@@ -1,6 +1,7 @@
 import { DIAS_ANTELACION, KM_ANTELACION } from './alerts'
+import { intervaloSugerido } from './elementos-catalogo'
 import { calcularProximaItv } from './itv-rules'
-import type { Averia, Itv, Mantenimiento, Repuesto, Seguro, Vehiculo } from './types'
+import type { Averia, Elemento, Itv, Seguro, Vehiculo } from './types'
 
 /** Grave = algo ya vencido. Leve = algo por vencer. */
 export type NivelAviso = 'leve' | 'grave'
@@ -50,11 +51,9 @@ function ultimoPorTipo<T>(
   items: T[],
   tipo: (item: T) => string,
   fecha: (item: T) => string,
-  cuenta: (item: T) => boolean,
 ): T[] {
   const mapa = new Map<string, T>()
   for (const item of items) {
-    if (!cuenta(item)) continue
     const existente = mapa.get(tipo(item))
     if (!existente || new Date(fecha(item)) > new Date(fecha(existente))) {
       mapa.set(tipo(item), item)
@@ -74,8 +73,7 @@ export function contarAvisos(
   hoy: Date,
   vehiculo: Vehiculo,
   averias: Averia[],
-  mantenimientos: Mantenimiento[],
-  repuestos: Repuesto[],
+  elementos: Elemento[],
   itvs: Itv[],
   seguros: Seguro[],
 ): AvisosVehiculo {
@@ -105,34 +103,17 @@ export function contarAvisos(
     if (nivelSeguro) niveles.push(nivelSeguro)
   }
 
-  const mantenimientosVigentes = ultimoPorTipo(
-    mantenimientos,
-    (m) => m.elementos,
-    (m) => m.fecha,
-    (m) => Boolean(m.intervaloKm || m.intervaloMeses),
-  )
-  for (const m of mantenimientosVigentes) {
+  const elementosVigentes = ultimoPorTipo(elementos, (e) => e.tipo, (e) => e.fecha)
+  for (const e of elementosVigentes) {
+    const intervalo = e.intervaloKm || e.intervaloMeses
+      ? { km: e.intervaloKm, meses: e.intervaloMeses }
+      : intervaloSugerido(e.tipo)
+    if (!intervalo.km && !intervalo.meses) continue
     const nivel = clasificarVencimiento(
       hoy,
       kmActual,
-      m.intervaloMeses ? addMeses(new Date(m.fecha), m.intervaloMeses) : undefined,
-      m.intervaloKm ? m.km + m.intervaloKm : undefined,
-    )
-    if (nivel) niveles.push(nivel)
-  }
-
-  const repuestosVigentes = ultimoPorTipo(
-    repuestos,
-    (r) => r.tipoRepuesto,
-    (r) => r.fecha,
-    (r) => Boolean(r.vidaUtilKm || r.vidaUtilAnios),
-  )
-  for (const r of repuestosVigentes) {
-    const nivel = clasificarVencimiento(
-      hoy,
-      kmActual,
-      r.vidaUtilAnios ? addMeses(new Date(r.fecha), r.vidaUtilAnios * 12) : undefined,
-      r.vidaUtilKm ? r.km + r.vidaUtilKm : undefined,
+      intervalo.meses ? addMeses(new Date(e.fecha), intervalo.meses) : undefined,
+      intervalo.km ? e.km + intervalo.km : undefined,
     )
     if (nivel) niveles.push(nivel)
   }

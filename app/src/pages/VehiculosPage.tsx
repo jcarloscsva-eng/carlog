@@ -120,22 +120,20 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
 
 export function VehiculosPage() {
   const { data: vehiculos, loading, error, reload } = useCollection(api.vehiculos.list)
-  const { data: mantenimientos, loading: cargandoMantenimientos } = useCollection(api.mantenimientos.list)
+  const { data: elementos, loading: cargandoElementos } = useCollection(api.elementos.list)
   const { data: itvs, loading: cargandoItvs } = useCollection(api.itv.list)
   const { data: averias, loading: cargandoAverias } = useCollection(api.averias.list)
   const { data: seguros, loading: cargandoSeguros } = useCollection(api.seguros.list)
-  const { data: repuestos, loading: cargandoRepuestos } = useCollection(api.repuestos.list)
 
-  // El globo resume cinco colecciones que cargan por separado. Hasta que
+  // El globo resume cuatro colecciones que cargan por separado. Hasta que
   // están todas, el recuento sería falso: sin las ITV cargadas, por
   // ejemplo, se recurre a la fecha estimada de primera ITV (que casi
   // siempre ya pasó) y saldría un globo rojo que desaparece solo.
   const avisosListos =
-    !cargandoMantenimientos &&
+    !cargandoElementos &&
     !cargandoItvs &&
     !cargandoAverias &&
-    !cargandoSeguros &&
-    !cargandoRepuestos
+    !cargandoSeguros
   const [showForm, setShowForm] = useState(false)
   const [infoVehiculo, setInfoVehiculo] = useState<Vehiculo | null>(null)
 
@@ -145,12 +143,12 @@ export function VehiculosPage() {
       const propios = calcularProximasTareas(
         hoy,
         v,
-        mantenimientos.filter((m) => m.vehiculoId === v.matricula),
+        elementos.filter((e) => e.vehiculoId === v.matricula),
         itvs.filter((i) => i.vehiculoId === v.matricula),
       )
       return total + propios.filter((t) => t.urgente).length
     }, 0)
-  }, [vehiculos, mantenimientos, itvs])
+  }, [vehiculos, elementos, itvs])
 
   const kmTotal = useMemo(() => vehiculos.reduce((sum, v) => sum + v.kmActual, 0), [vehiculos])
 
@@ -191,8 +189,7 @@ export function VehiculosPage() {
             new Date(),
             v,
             averias.filter((a) => a.vehiculoId === v.matricula),
-            mantenimientos.filter((m) => m.vehiculoId === v.matricula),
-            repuestos.filter((r) => r.vehiculoId === v.matricula),
+            elementos.filter((e) => e.vehiculoId === v.matricula),
             itvs.filter((i) => i.vehiculoId === v.matricula),
             seguros.filter((s) => s.vehiculoId === v.matricula),
           )
