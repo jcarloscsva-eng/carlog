@@ -7,7 +7,7 @@ import { MarcaModeloFields } from '../components/MarcaModeloFields'
 import { GloboAvisos } from '../components/GloboAvisos'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { contarAvisos } from '@shared/avisos'
+import { listarAvisos } from '@shared/avisos'
 import type { Vehiculo, VehiculoTipo } from '@shared/types'
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
@@ -233,7 +233,7 @@ export function VehiculosPage() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {vehiculos.map((v) => {
-          const avisos = contarAvisos(
+          const detalleAvisos = listarAvisos(
             new Date(),
             v,
             averias.filter((a) => a.vehiculoId === v.matricula),
@@ -241,9 +241,17 @@ export function VehiculosPage() {
             itvs.filter((i) => i.vehiculoId === v.matricula),
             seguros.filter((s) => s.vehiculoId === v.matricula),
           )
+          const avisos = {
+            total: detalleAvisos.length,
+            nivel: detalleAvisos.some((a) => a.nivel === 'grave')
+              ? ('grave' as const)
+              : detalleAvisos.length > 0
+                ? ('leve' as const)
+                : null,
+          }
           return (
             <div key={v.id} className="relative">
-              {avisosListos && <GloboAvisos avisos={avisos} esquina />}
+              {avisosListos && <GloboAvisos avisos={avisos} detalle={detalleAvisos} esquina />}
               <Link
                 to={`/vehiculos/${v.id}`}
                 className="panel block p-4 transition hover:border-stamp/30"

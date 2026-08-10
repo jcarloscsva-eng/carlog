@@ -13,7 +13,7 @@ import { GloboAvisos } from '../components/GloboAvisos'
 import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconVehiculo } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { contarAvisos } from '@shared/avisos'
+import { listarAvisos } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Pasaporte', 'Averías', 'Elementos', 'ITV', 'Seguro'] as const
@@ -95,19 +95,24 @@ export function VehiculoDetailPage() {
     !cargandoItvs &&
     !cargandoSeguros
 
+  const detalleAvisos = useMemo(
+    () =>
+      vehiculo ? listarAvisos(new Date(), vehiculo, misAverias, misElementos, misItvs, misSeguros) : [],
+    [vehiculo, misAverias, misElementos, misItvs, misSeguros],
+  )
   const avisos = useMemo(
     () =>
       vehiculo
-        ? contarAvisos(
-            new Date(),
-            vehiculo,
-            misAverias,
-            misElementos,
-            misItvs,
-            misSeguros,
-          )
+        ? {
+            total: detalleAvisos.length,
+            nivel: detalleAvisos.some((a) => a.nivel === 'grave')
+              ? ('grave' as const)
+              : detalleAvisos.length > 0
+                ? ('leve' as const)
+                : null,
+          }
         : null,
-    [vehiculo, misAverias, misElementos, misItvs, misSeguros],
+    [vehiculo, detalleAvisos],
   )
 
   async function handleEliminar() {
@@ -170,7 +175,7 @@ export function VehiculoDetailPage() {
               <h1 className="font-display text-2xl font-semibold">
                 {vehiculo.marca} {vehiculo.modelo}
               </h1>
-              {avisosListos && avisos && <GloboAvisos avisos={avisos} enOscuro />}
+              {avisosListos && avisos && <GloboAvisos avisos={avisos} detalle={detalleAvisos} enOscuro />}
             </div>
             <p className="text-sm text-[#b6a98f]">
               {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
