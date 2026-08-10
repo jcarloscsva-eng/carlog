@@ -26,6 +26,34 @@ export class IaNoDisponibleError extends Error {
   }
 }
 
+/**
+ * El binding de Workers AI no devuelve siempre la misma forma: según el
+ * modelo, `response` puede venir como string directo, como array de
+ * bloques `{ text }` (estilo multimodal/tool-calling), o anidado en
+ * `{ content }`/`{ text }`. En vez de asumir una forma fija — que es
+ * justo lo que rompió al cambiar de modelo (ver #25) —, se busca el
+ * primer texto usable en las formas conocidas.
+ */
+function extraerTexto(respuesta: unknown): string {
+  if (typeof respuesta === 'string') return respuesta
+  if (respuesta === null || typeof respuesta !== 'object') return ''
+
+  const obj = respuesta as Record<string, unknown>
+  if (typeof obj.response === 'string') return obj.response
+  if (typeof obj.text === 'string') return obj.text
+  if (typeof obj.content === 'string') return obj.content
+
+  if (Array.isArray(obj.response)) {
+    return obj.response
+      .map((parte) => extraerTexto(parte))
+      .filter(Boolean)
+      .join('')
+  }
+  if (obj.response && typeof obj.response === 'object') return extraerTexto(obj.response)
+
+  return ''
+}
+
 async function preguntar(env: AiEnv, systemPrompt: string, userPrompt: string): Promise<string> {
   if (!env.AI) throw new IaNoDisponibleError()
 
@@ -37,8 +65,7 @@ async function preguntar(env: AiEnv, systemPrompt: string, userPrompt: string): 
     max_tokens: 400,
   })
 
-  const texto = (respuesta as { response?: string }).response
-  return (texto ?? '').trim()
+  return extraerTexto(respuesta).trim()
 }
 
 /**
