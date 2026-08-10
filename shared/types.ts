@@ -29,39 +29,36 @@ export interface Averia {
   fecha: string
   descripcion: string
   estado: AveriaEstado
+  /** Diagnóstico orientativo generado por IA a partir de la descripción — se guarda para no volver a pedirlo cada vez. */
+  diagnosticoIA?: string
 }
 
-export interface Mantenimiento {
+/**
+ * Un elemento del vehículo (aceite, filtro de aceite, batería, neumáticos,
+ * pastillas de freno…) con su propio reloj: cada vez que se cambia o se
+ * revisa, se registra aquí con su fecha/km y, si se conoce, el intervalo
+ * hasta el próximo cambio (en km y/o meses). Sustituye a lo que antes eran
+ * "Mantenimientos" y "Repuestos" por separado — eran el mismo concepto
+ * (algo del coche que se atiende y que hay que volver a atender más
+ * adelante) contado con dos vocabularios distintos.
+ *
+ * Varios elementos cambiados en la misma visita al taller comparten
+ * `visitaId` (generado en el cliente al guardar) para poder agruparlos en
+ * la interfaz como un único ticket, aunque cada uno mantenga su propio
+ * intervalo y por tanto su propia alerta.
+ */
+export interface Elemento {
   id: string
   vehiculoId: string
+  tipo: string
   fecha: string
   km: number
   precio: number
   tienda: string
-  elementos: string
-  /** Si se rellena, genera una alerta para el próximo mantenimiento del mismo tipo. */
+  /** Si se rellena (a mano o con el valor sugerido del catálogo), genera una alerta para el próximo cambio de este elemento. */
   intervaloKm?: number
   intervaloMeses?: number
-}
-
-export type TipoRepuesto =
-  | 'Neumáticos'
-  | 'Batería'
-  | 'Frenos'
-  | 'Correa de distribución'
-  | 'Filtros'
-  | 'Otro'
-
-export interface Repuesto {
-  id: string
-  vehiculoId: string
-  tipoRepuesto: TipoRepuesto
-  fecha: string
-  km: number
-  precio: number
-  tienda: string
-  vidaUtilKm?: number
-  vidaUtilAnios?: number
+  visitaId?: string
 }
 
 export type ItvResultado = 'Favorable' | 'Desfavorable' | 'Negativo'
@@ -121,7 +118,7 @@ export interface PushSubscriptionRecord {
   keysAuth: string
 }
 
-export type AlertaTipo = 'Mantenimiento' | 'Repuesto' | 'ITV'
+export type AlertaTipo = 'Elemento' | 'ITV'
 
 export interface AlertaEnviada {
   id: string

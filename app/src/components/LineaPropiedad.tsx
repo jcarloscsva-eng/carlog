@@ -1,8 +1,7 @@
 import type { AnioPropiedad, TipoEventoLinea } from '@shared/linea-propiedad'
 
 const COLOR_EVENTO: Record<TipoEventoLinea, string> = {
-  mantenimiento: 'var(--color-olive)',
-  repuesto: 'var(--color-gold)',
+  elemento: 'var(--color-olive)',
   itv: 'var(--color-itv)',
   'averia-resuelta': 'var(--color-stamp)',
   'averia-pendiente': 'var(--color-stamp)',

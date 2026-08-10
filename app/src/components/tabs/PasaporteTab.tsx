@@ -1,13 +1,13 @@
 import { useMemo } from 'react'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { Averia, Itv, Mantenimiento, Parte, Repuesto, Seguro, Vehiculo } from '@shared/types'
+import type { Averia, Elemento, Itv, Parte, Seguro, Vehiculo } from '@shared/types'
 import type { ProximaTarea } from '@shared/alerts'
 import { calcularAniosPropiedad } from '@shared/linea-propiedad'
-import { IconAveria, IconItv, IconMantenimiento, IconRepuesto, IconSeguro, IconVehiculo } from '../Icons'
+import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconVehiculo } from '../Icons'
 import { LineaPropiedad } from '../LineaPropiedad'
 
-type TipoEvento = 'origen' | 'mantenimiento' | 'repuesto' | 'itv' | 'averia' | 'seguro' | 'parte' | 'futuro'
+type TipoEvento = 'origen' | 'elemento' | 'itv' | 'averia' | 'seguro' | 'parte' | 'futuro'
 
 interface Evento {
   fecha: string
@@ -20,8 +20,7 @@ interface Evento {
 
 const ICONOS: Record<TipoEvento, typeof IconVehiculo> = {
   origen: IconVehiculo,
-  mantenimiento: IconMantenimiento,
-  repuesto: IconRepuesto,
+  elemento: IconMantenimiento,
   itv: IconItv,
   averia: IconAveria,
   seguro: IconSeguro,
@@ -46,8 +45,7 @@ function formateaFecha(iso: string): string {
 export function PasaporteTab({
   vehiculo,
   averias,
-  mantenimientos,
-  repuestos,
+  elementos,
   itvs,
   seguros,
   partes,
@@ -55,8 +53,7 @@ export function PasaporteTab({
 }: {
   vehiculo: Vehiculo
   averias: Averia[]
-  mantenimientos: Mantenimiento[]
-  repuestos: Repuesto[]
+  elementos: Elemento[]
   itvs: Itv[]
   seguros: Seguro[]
   partes: Parte[]
@@ -71,24 +68,14 @@ export function PasaporteTab({
         : { fecha: `${vehiculo.anio}-01-01`, tipo: 'origen', titulo: `Matriculado en ${vehiculo.anio}`, detalle: `${vehiculo.marca} ${vehiculo.modelo} · ${vehiculo.matricula}` },
     )
 
-    for (const m of mantenimientos) {
+    for (const e of elementos) {
       lista.push({
-        fecha: m.fecha,
-        tipo: 'mantenimiento',
-        titulo: m.elementos,
-        detalle: m.tienda,
-        importe: m.precio,
-        km: m.km,
-      })
-    }
-    for (const r of repuestos) {
-      lista.push({
-        fecha: r.fecha,
-        tipo: 'repuesto',
-        titulo: r.tipoRepuesto,
-        detalle: r.tienda,
-        importe: r.precio,
-        km: r.km,
+        fecha: e.fecha,
+        tipo: 'elemento',
+        titulo: e.tipo,
+        detalle: e.tienda,
+        importe: e.precio,
+        km: e.km,
       })
     }
     for (const i of itvs) {
@@ -117,14 +104,16 @@ export function PasaporteTab({
     }
 
     return lista.sort((a, b) => a.fecha.localeCompare(b.fecha))
-  }, [vehiculo, averias, mantenimientos, repuestos, itvs, seguros, partes])
+  }, [vehiculo, averias, elementos, itvs, seguros, partes])
 
   const costeTotal = useMemo(
     () => eventos.reduce((suma, e) => suma + (e.importe ?? 0), 0),
     [eventos],
   )
 
-  const intervenciones = mantenimientos.length + repuestos.length
+  // Varios elementos cambiados en la misma visita comparten visitaId y
+  // cuentan como una sola intervención en el taller, no una por elemento.
+  const intervenciones = new Set(elementos.map((e) => e.visitaId || e.id)).size
 
   const futuros = useMemo(
     () =>
@@ -145,8 +134,8 @@ export function PasaporteTab({
   )
 
   const aniosPropiedad = useMemo(
-    () => calcularAniosPropiedad(new Date(), vehiculo, averias, mantenimientos, repuestos, itvs, seguros, partes),
-    [vehiculo, averias, mantenimientos, repuestos, itvs, seguros, partes],
+    () => calcularAniosPropiedad(new Date(), vehiculo, averias, elementos, itvs, seguros, partes),
+    [vehiculo, averias, elementos, itvs, seguros, partes],
   )
 
   // Agrupamos por año: es como se lee la vida de un coche.
@@ -225,11 +214,7 @@ export function PasaporteTab({
       <div className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink-dim">
         <span className="inline-flex items-center gap-1.5">
           <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-olive)' }} />
-          Mantenimiento
-        </span>
-        <span className="inline-flex items-center gap-1.5">
-          <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-gold)' }} />
-          Repuesto
+          Elemento
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i className="inline-block h-2.5 w-2.5 rounded-full" style={{ background: 'var(--color-stamp)' }} />

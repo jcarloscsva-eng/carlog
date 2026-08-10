@@ -1,9 +1,8 @@
 import type {
   Averia,
+  Elemento,
   Itv,
-  Mantenimiento,
   Parte,
-  Repuesto,
   Seguro,
   UsuarioPermitido,
   Vehiculo,
@@ -55,24 +54,13 @@ export const api = {
       request<Averia>(`/averias/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
     remove: (id: string) => request<{ ok: true }>(`/averias/${id}`, { method: 'DELETE' }),
   },
-  mantenimientos: {
-    list: () => request<Mantenimiento[]>('/mantenimientos'),
-    create: (data: Omit<Mantenimiento, 'id'>) =>
-      request<Mantenimiento>('/mantenimientos', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<Omit<Mantenimiento, 'id'>>) =>
-      request<Mantenimiento>(`/mantenimientos/${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(data),
-      }),
-    remove: (id: string) => request<{ ok: true }>(`/mantenimientos/${id}`, { method: 'DELETE' }),
-  },
-  repuestos: {
-    list: () => request<Repuesto[]>('/repuestos'),
-    create: (data: Omit<Repuesto, 'id'>) =>
-      request<Repuesto>('/repuestos', { method: 'POST', body: JSON.stringify(data) }),
-    update: (id: string, data: Partial<Omit<Repuesto, 'id'>>) =>
-      request<Repuesto>(`/repuestos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
-    remove: (id: string) => request<{ ok: true }>(`/repuestos/${id}`, { method: 'DELETE' }),
+  elementos: {
+    list: () => request<Elemento[]>('/elementos'),
+    create: (data: Omit<Elemento, 'id'>) =>
+      request<Elemento>('/elementos', { method: 'POST', body: JSON.stringify(data) }),
+    update: (id: string, data: Partial<Omit<Elemento, 'id'>>) =>
+      request<Elemento>(`/elementos/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    remove: (id: string) => request<{ ok: true }>(`/elementos/${id}`, { method: 'DELETE' }),
   },
   itv: {
     list: () => request<Itv[]>('/itv'),
@@ -114,4 +102,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(subscription),
     }),
+  ai: {
+    diagnosticoAveria: (data: { marca: string; modelo: string; anio: number; descripcion: string }) =>
+      request<{ diagnostico: string }>('/ai/diagnostico-averia', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    mantenimientoSugerido: (data: { marca: string; modelo: string; anio: number }) =>
+      request<{ sugerencias: { tipo: string; intervaloKm?: number; intervaloMeses?: number }[] }>(
+        '/ai/mantenimiento-sugerido',
+        { method: 'POST', body: JSON.stringify(data) },
+      ),
+  },
 }

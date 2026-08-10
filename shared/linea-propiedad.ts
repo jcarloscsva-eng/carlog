@@ -1,6 +1,6 @@
-import type { Averia, Itv, Mantenimiento, Parte, Repuesto, Seguro, Vehiculo } from './types'
+import type { Averia, Elemento, Itv, Parte, Seguro, Vehiculo } from './types'
 
-export type TipoEventoLinea = 'mantenimiento' | 'repuesto' | 'itv' | 'averia-pendiente' | 'averia-resuelta'
+export type TipoEventoLinea = 'elemento' | 'itv' | 'averia-pendiente' | 'averia-resuelta'
 
 export interface EventoLinea {
   /** Mes dentro del año de propiedad, 0–11.9 (posición horizontal del punto). */
@@ -53,8 +53,7 @@ export function calcularAniosPropiedad(
   hoy: Date,
   vehiculo: Vehiculo,
   averias: Averia[],
-  mantenimientos: Mantenimiento[],
-  repuestos: Repuesto[],
+  elementos: Elemento[],
   itvs: Itv[],
   seguros: Seguro[],
   partes: Parte[],
@@ -99,17 +98,11 @@ export function calcularAniosPropiedad(
       label: a.descripcion,
     })
   }
-  for (const m of mantenimientos) {
-    const b = bucketDe(new Date(m.fecha))
+  for (const e of elementos) {
+    const b = bucketDe(new Date(e.fecha))
     if (!b) continue
-    b.anio.eventos.push({ mes: b.mes, tipo: 'mantenimiento', label: m.elementos, coste: m.precio })
-    b.anio.gasto += m.precio
-  }
-  for (const r of repuestos) {
-    const b = bucketDe(new Date(r.fecha))
-    if (!b) continue
-    b.anio.eventos.push({ mes: b.mes, tipo: 'repuesto', label: r.tipoRepuesto, coste: r.precio })
-    b.anio.gasto += r.precio
+    b.anio.eventos.push({ mes: b.mes, tipo: 'elemento', label: e.tipo, coste: e.precio })
+    b.anio.gasto += e.precio
   }
   for (const i of itvs) {
     const b = bucketDe(new Date(i.fechaRealizada))

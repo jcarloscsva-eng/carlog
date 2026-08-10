@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev:app": "npm run dev --workspace app",
-    "dev:pages": "wrangler pages dev app/dist --compatibility-date=2024-09-23",
+    "dev:pages": "wrangler pages dev app/dist --compatibility-date=2024-09-23 --ai=AI",
     "dev:cron": "npm run dev --workspace cron-worker",
     "build:app": "npm run build --workspace app",
     "deploy:cron": "npm run deploy --workspace cron-worker"

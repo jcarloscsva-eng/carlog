@@ -14,14 +14,12 @@ import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 
 type Periodo = 'anio-actual' | '3m' | '6m' | '12m' | 'personalizado'
-type Tipo = 'Mantenimiento' | 'Repuesto'
 
 interface GastoItem {
   id: string
   vehiculoId: string
   fecha: string
   precio: number
-  tipo: Tipo
   categoria: string
 }
 
@@ -41,35 +39,23 @@ function rangoPorPeriodo(periodo: Periodo, desde: string, hasta: string): [Date,
 
 export function ReportesPage() {
   const { data: vehiculos } = useCollection(api.vehiculos.list)
-  const { data: mantenimientos } = useCollection(api.mantenimientos.list)
-  const { data: repuestos } = useCollection(api.repuestos.list)
+  const { data: elementos } = useCollection(api.elementos.list)
 
   const [periodo, setPeriodo] = useState<Periodo>('anio-actual')
   const [desde, setDesde] = useState('')
   const [hasta, setHasta] = useState('')
-  const [tiposActivos, setTiposActivos] = useState<Set<Tipo>>(new Set(['Mantenimiento', 'Repuesto']))
   const [vehiculoId, setVehiculoId] = useState<string>('todos')
 
   const items: GastoItem[] = useMemo(
-    () => [
-      ...mantenimientos.map((m) => ({
-        id: m.id,
-        vehiculoId: m.vehiculoId,
-        fecha: m.fecha,
-        precio: m.precio,
-        tipo: 'Mantenimiento' as const,
-        categoria: m.elementos,
+    () =>
+      elementos.map((e) => ({
+        id: e.id,
+        vehiculoId: e.vehiculoId,
+        fecha: e.fecha,
+        precio: e.precio,
+        categoria: e.tipo,
       })),
-      ...repuestos.map((r) => ({
-        id: r.id,
-        vehiculoId: r.vehiculoId,
-        fecha: r.fecha,
-        precio: r.precio,
-        tipo: 'Repuesto' as const,
-        categoria: r.tipoRepuesto,
-      })),
-    ],
-    [mantenimientos, repuestos],
+    [elementos],
   )
 
   const [rangoInicio, rangoFin] = rangoPorPeriodo(periodo, desde, hasta)
@@ -77,7 +63,6 @@ export function ReportesPage() {
   const filtrados = items.filter((item) => {
     const fecha = new Date(item.fecha)
     if (fecha < rangoInicio || fecha > rangoFin) return false
-    if (!tiposActivos.has(item.tipo)) return false
     if (vehiculoId !== 'todos' && item.vehiculoId !== vehiculoId) return false
     return true
   })
@@ -95,15 +80,6 @@ export function ReportesPage() {
       .map(([mes, total]) => ({ mes, total: Number(total.toFixed(2)) }))
   }, [filtrados])
 
-  function toggleTipo(tipo: Tipo) {
-    setTiposActivos((prev) => {
-      const next = new Set(prev)
-      if (next.has(tipo)) next.delete(tipo)
-      else next.add(tipo)
-      return next
-    })
-  }
-
   function exportarPdf() {
     const doc = new jsPDF()
     doc.setFontSize(14)
@@ -118,10 +94,10 @@ export function ReportesPage() {
 
     autoTable(doc, {
       startY: 35,
-      head: [['Fecha', 'Tipo', 'Categoría', 'Precio (€)']],
+      head: [['Fecha', 'Elemento', 'Precio (€)']],
       body: filtrados
         .sort((a, b) => a.fecha.localeCompare(b.fecha))
-        .map((i) => [i.fecha, i.tipo, i.categoria, i.precio.toFixed(2)]),
+        .map((i) => [i.fecha, i.categoria, i.precio.toFixed(2)]),
     })
 
     doc.save('carlog-informe.pdf')
@@ -160,25 +136,6 @@ export function ReportesPage() {
             </option>
           ))}
         </select>
-
-        <div className="flex items-center gap-3 text-sm text-ink-dim">
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={tiposActivos.has('Mantenimiento')}
-              onChange={() => toggleTipo('Mantenimiento')}
-            />
-            Mantenimientos
-          </label>
-          <label className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={tiposActivos.has('Repuesto')}
-              onChange={() => toggleTipo('Repuesto')}
-            />
-            Repuestos
-          </label>
-        </div>
       </div>
 
       <div className="panel mb-4 flex items-center justify-between p-4">
@@ -211,9 +168,9 @@ export function ReportesPage() {
         {filtrados
           .sort((a, b) => b.fecha.localeCompare(a.fecha))
           .map((i) => (
-            <li key={`${i.tipo}-${i.id}`} className="entry flex items-center justify-between p-3 text-sm">
+            <li key={i.id} className="entry flex items-center justify-between p-3 text-sm">
               <span className="text-ink">
-                {i.fecha} · {i.tipo} · {i.categoria}
+                {i.fecha} · {i.categoria}
               </span>
               <span className="font-medium text-stamp">{i.precio.toFixed(2)} €</span>
             </li>
