@@ -57,7 +57,14 @@ export function VehiculoDetailPage() {
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [focusKm, setFocusKm] = useState(false)
-  const [tareasAbiertas, setTareasAbiertas] = useState(false)
+  // null = todavía sin elección manual: se abre sola si hay algo urgente.
+  // En cuanto se pulsa el botón, manda esa elección tanto para abrir como
+  // para cerrar, aunque siga habiendo tareas urgentes.
+  const [tareasAbiertas, setTareasAbiertas] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    setTareasAbiertas(null)
+  }, [routeId])
 
   // Al llegar con ?editarKm=1 (p. ej. desde el aviso de kilometraje
   // desactualizado), abre directamente el formulario de edición con el
@@ -88,7 +95,7 @@ export function VehiculoDetailPage() {
   // hace falta ocupar espacio en pantalla, pero en cuanto algo se pone
   // urgente se despliega sola aunque el usuario no la haya tocado.
   const hayTareasUrgentes = proximasTareas.some((t) => t.urgente)
-  const mostrarTareas = tareasAbiertas || hayTareasUrgentes
+  const mostrarTareas = tareasAbiertas ?? hayTareasUrgentes
 
   const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
   const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
@@ -220,12 +227,22 @@ export function VehiculoDetailPage() {
       {vehiculo && tab !== 'Pasaporte' && (
         <div className="mb-6">
           <button
-            onClick={() => setTareasAbiertas((v) => !v)}
+            onClick={() => setTareasAbiertas(!mostrarTareas)}
             className="flex w-full items-center justify-between gap-2 text-left"
           >
             <span className="eyebrow">Próximas tareas</span>
-            <span className="flex items-center gap-1.5 text-xs text-ink-dim">
+            <span
+              className={`flex items-center gap-1.5 text-xs ${
+                hayTareasUrgentes && !mostrarTareas ? 'font-medium text-amber-700' : 'text-ink-dim'
+              }`}
+            >
               {!hayTareasUrgentes && (mostrarTareas ? 'Todo al día' : 'Todo al día — ver detalle')}
+              {hayTareasUrgentes && !mostrarTareas && (
+                <>
+                  {proximasTareas.filter((t) => t.urgente).length}{' '}
+                  {proximasTareas.filter((t) => t.urgente).length === 1 ? 'urgente' : 'urgentes'}
+                </>
+              )}
               <svg
                 viewBox="0 0 24 24"
                 className={`h-3.5 w-3.5 shrink-0 transition-transform ${mostrarTareas ? 'rotate-180' : ''}`}
