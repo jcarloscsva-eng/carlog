@@ -116,22 +116,62 @@ export async function sugerirMantenimiento(
   const user = `Vehículo: ${datos.marca} ${datos.modelo}, año ${datos.anio}.`
 
   const texto = await preguntar(env, system, user)
-  const inicio = texto.indexOf('[')
-  const fin = texto.lastIndexOf(']')
-  if (inicio === -1 || fin === -1) return []
-
-  try {
-    const parsed = JSON.parse(texto.slice(inicio, fin + 1)) as unknown
-    if (!Array.isArray(parsed)) return []
-    return parsed
-      .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
-      .map((item) => ({
-        tipo: String(item.tipo ?? '').trim(),
-        intervaloKm: typeof item.intervaloKm === 'number' ? item.intervaloKm : undefined,
-        intervaloMeses: typeof item.intervaloMeses === 'number' ? item.intervaloMeses : undefined,
-      }))
-      .filter((item) => item.tipo.length > 0)
-  } catch {
-    return []
+  const array = extraerArrayJson(texto)
+  if (!array) {
+    throw new Error(
+      `La IA no devolvió una lista reconocible. Empieza así: "${texto.slice(0, 160)}${texto.length > 160 ? '…' : ''}"`,
+    )
   }
+
+  const sugerencias = array
+    .filter((item): item is Record<string, unknown> => typeof item === 'object' && item !== null)
+    .map((item) => ({
+      tipo: String(item.tipo ?? '').trim(),
+      intervaloKm: typeof item.intervaloKm === 'number' ? item.intervaloKm : undefined,
+      intervaloMeses: typeof item.intervaloMeses === 'number' ? item.intervaloMeses : undefined,
+    }))
+    .filter((item) => item.tipo.length > 0)
+
+  if (sugerencias.length === 0) {
+    throw new Error(
+      `La IA devolvió una lista vacía o sin el formato esperado: "${texto.slice(0, 160)}${texto.length > 160 ? '…' : ''}"`,
+    )
+  }
+  return sugerencias
+}
+
+/**
+ * Busca un array JSON en el texto del modelo, tolerando lo que suelen
+ * añadir aunque se les pida "solo JSON": vallas de código ```json ... ```,
+ * una frase antes/después, o el array envuelto en un objeto
+ * (`{"elementos": [...]}`) en vez de suelto.
+ */
+function extraerArrayJson(texto: string): unknown[] | null {
+  const limpio = texto.replace(/```json|```/gi, '').trim()
+
+  // Intento directo: el texto entero es el JSON (con o sin las vallas).
+  const directo = intentarParsearArray(limpio)
+  if (directo) return directo
+
+  // Si no, el primer '[' ... último ']' del texto.
+  const inicio = limpio.indexOf('[')
+  const fin = limpio.lastIndexOf(']')
+  if (inicio === -1 || fin === -1 || fin <= inicio) return null
+  return intentarParsearArray(limpio.slice(inicio, fin + 1))
+}
+
+function intentarParsearArray(fragmento: string): unknown[] | null {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(fragmento)
+  } catch {
+    return null
+  }
+  if (Array.isArray(parsed)) return parsed
+  // El modelo envolvió el array en un objeto — usa la primera propiedad que sea un array.
+  if (parsed && typeof parsed === 'object') {
+    const arrayProp = Object.values(parsed as Record<string, unknown>).find((v) => Array.isArray(v))
+    if (Array.isArray(arrayProp)) return arrayProp
+  }
+  return null
 }
