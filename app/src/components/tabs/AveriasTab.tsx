@@ -10,12 +10,14 @@ export function AveriasTab({
   vehiculoId,
   marca,
   modelo,
+  anio,
   averias,
   reload,
 }: {
   vehiculoId: string
   marca: string
   modelo: string
+  anio: number
   averias: Averia[]
   reload: () => void
 }) {
@@ -25,6 +27,8 @@ export function AveriasTab({
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [orden, setOrden] = useState<OrdenFecha>('desc')
+  const [diagnosticando, setDiagnosticando] = useState<string | null>(null)
+  const [errorIA, setErrorIA] = useState<string | null>(null)
 
   const ordenadas = [...averias].sort((a, b) =>
     orden === 'desc' ? b.fecha.localeCompare(a.fecha) : a.fecha.localeCompare(b.fecha),
@@ -78,6 +82,20 @@ export function AveriasTab({
     reload()
   }
 
+  async function handleDiagnostico(a: Averia) {
+    setDiagnosticando(a.id)
+    setErrorIA(null)
+    try {
+      const { diagnostico } = await api.ai.diagnosticoAveria({ marca, modelo, anio, descripcion: a.descripcion })
+      await api.averias.update(a.id, { diagnosticoIA: diagnostico })
+      reload()
+    } catch (err) {
+      setErrorIA((err as Error).message)
+    } finally {
+      setDiagnosticando(null)
+    }
+  }
+
   return (
     <div>
       <form onSubmit={handleSubmit} className="mb-4 flex gap-2">
@@ -97,33 +115,51 @@ export function AveriasTab({
       {averias.length > 0 && (
         <OrdenFechaButton orden={orden} onToggle={() => setOrden((o) => (o === 'desc' ? 'asc' : 'desc'))} />
       )}
+      {errorIA && <p className="mb-2 text-sm text-red-700">{errorIA}</p>}
 
       <ul className="space-y-2">
         {ordenadas.map((a) => (
           <li key={a.id} className="entry flex items-start justify-between gap-3 p-3">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm text-ink">{a.descripcion}</p>
               <p className="mb-1 text-xs text-ink-dim">{a.fecha}</p>
               <EstadoStamp estado={a.estado} />
+              {a.diagnosticoIA && (
+                <div className="mt-2 rounded-md border border-line bg-paper p-2 text-xs text-ink">
+                  <span className="mb-0.5 block font-medium text-ink-bright">🤖 Diagnóstico orientativo</span>
+                  {a.diagnosticoIA}
+                </div>
+              )}
             </div>
-            <div className="flex shrink-0 gap-2">
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <div className="flex gap-2">
+                <button onClick={() => marcarResuelta(a)} className="btn-ghost px-2 py-1 text-xs">
+                  {a.estado === 'Pendiente' ? 'Marcar resuelta' : 'Reabrir'}
+                </button>
+                <button onClick={() => setEditing(a)} className="icon-btn" aria-label="Editar avería" title="Editar">
+                  <IconEdit className="h-4 w-4" />
+                </button>
+                <button onClick={() => handleDelete(a)} className="icon-btn" aria-label="Eliminar avería" title="Eliminar">
+                  <IconTrash className="h-4 w-4" />
+                </button>
+              </div>
+              {!a.diagnosticoIA && (
+                <button
+                  onClick={() => handleDiagnostico(a)}
+                  disabled={diagnosticando === a.id}
+                  className="btn-ghost px-2 py-1 text-xs"
+                >
+                  {diagnosticando === a.id ? 'Diagnosticando…' : '🤖 Diagnóstico con IA'}
+                </button>
+              )}
               <a
                 href={`https://www.google.com/search?q=${encodeURIComponent(`${marca} ${modelo} ${a.descripcion}`)}`}
                 target="_blank"
                 rel="noreferrer"
-                className="btn-ghost px-2 py-1 text-xs"
+                className="text-xs text-ink-dim hover:text-stamp"
               >
-                Buscar info
+                Buscar en Google
               </a>
-              <button onClick={() => marcarResuelta(a)} className="btn-ghost px-2 py-1 text-xs">
-                {a.estado === 'Pendiente' ? 'Marcar resuelta' : 'Reabrir'}
-              </button>
-              <button onClick={() => setEditing(a)} className="icon-btn" aria-label="Editar avería" title="Editar">
-                <IconEdit className="h-4 w-4" />
-              </button>
-              <button onClick={() => handleDelete(a)} className="icon-btn" aria-label="Eliminar avería" title="Eliminar">
-                <IconTrash className="h-4 w-4" />
-              </button>
             </div>
           </li>
         ))}

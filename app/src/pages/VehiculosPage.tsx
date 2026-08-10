@@ -77,22 +77,69 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
       query: `${nombre} ficha técnica`,
     },
     {
-      titulo: 'Mantenimiento recomendado por el fabricante',
-      detalle: 'Intervalos de revisión, aceite y correa de distribución según la marca.',
-      query: `mantenimiento recomendado ${nombre} intervalos kilometraje`,
-    },
-    {
       titulo: 'Problemas y fallos más comunes',
       detalle: 'Lo que suelen reportar otros propietarios en foros y redes.',
       query: `problemas comunes fallos ${nombre} foro opiniones`,
     },
   ]
 
+  const [sugerencias, setSugerencias] = useState<{ tipo: string; intervaloKm?: number; intervaloMeses?: number }[] | null>(null)
+  const [cargando, setCargando] = useState(false)
+  const [errorIA, setErrorIA] = useState<string | null>(null)
+
+  async function pedirSugerencias() {
+    setCargando(true)
+    setErrorIA(null)
+    try {
+      const { sugerencias } = await api.ai.mantenimientoSugerido({
+        marca: vehiculo.marca,
+        modelo: vehiculo.modelo,
+        anio: vehiculo.anio,
+      })
+      setSugerencias(sugerencias)
+    } catch (err) {
+      setErrorIA((err as Error).message)
+    } finally {
+      setCargando(false)
+    }
+  }
+
   return (
     <Modal open onClose={onClose} title={`${vehiculo.marca} ${vehiculo.modelo} — información útil`}>
       <p className="mb-4 text-sm text-ink-dim">
         Antes de empezar a llevar su historial, esto te puede ayudar a conocer mejor tu vehículo:
       </p>
+
+      {sugerencias === null ? (
+        <button onClick={pedirSugerencias} disabled={cargando} className="entry mb-2 block w-full p-3 text-left transition hover:border-stamp/40">
+          <p className="text-sm font-medium text-ink-bright">
+            {cargando ? 'Consultando…' : '🤖 Mantenimiento recomendado por el fabricante'}
+          </p>
+          <p className="text-xs text-ink-dim">Plan orientativo generado por IA para este modelo exacto.</p>
+        </button>
+      ) : (
+        <div className="entry mb-2 p-3">
+          <p className="mb-1.5 text-sm font-medium text-ink-bright">🤖 Mantenimiento recomendado (IA)</p>
+          {sugerencias.length > 0 ? (
+            <ul className="space-y-1">
+              {sugerencias.map((s) => (
+                <li key={s.tipo} className="flex items-center justify-between gap-2 text-xs">
+                  <span className="text-ink">{s.tipo}</span>
+                  <span className="text-ink-dim">
+                    {[s.intervaloKm ? `${s.intervaloKm.toLocaleString('es-ES')} km` : null, s.intervaloMeses ? `${s.intervaloMeses} meses` : null]
+                      .filter(Boolean)
+                      .join(' / ') || 'sin intervalo'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-xs text-ink-dim">Sin sugerencias.</p>
+          )}
+        </div>
+      )}
+      {errorIA && <p className="mb-2 text-xs text-red-700">{errorIA}</p>}
+
       <ul className="space-y-2">
         {enlaces.map((e) => (
           <li key={e.titulo}>
@@ -109,7 +156,8 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
         ))}
       </ul>
       <p className="mt-4 text-xs text-ink-dim">
-        Cada enlace abre una búsqueda en Google — contrasta siempre la información antes de darla por buena.
+        El plan de mantenimiento es orientativo, generado por IA. Los enlaces abren una búsqueda en
+        Google — contrasta siempre la información antes de darla por buena.
       </p>
       <button onClick={onClose} className="btn-ghost mt-4 w-full">
         Cerrar

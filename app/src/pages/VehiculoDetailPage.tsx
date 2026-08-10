@@ -267,6 +267,7 @@ export function VehiculoDetailPage() {
           vehiculoId={matricula}
           marca={vehiculo?.marca ?? ''}
           modelo={vehiculo?.modelo ?? ''}
+          anio={vehiculo?.anio ?? 0}
           averias={averias.filter((a) => a.vehiculoId === matricula)}
           reload={reloadAverias}
         />
@@ -275,6 +276,9 @@ export function VehiculoDetailPage() {
         <ElementosTab
           vehiculoId={matricula}
           kmActual={vehiculo.kmActual}
+          marca={vehiculo.marca}
+          modelo={vehiculo.modelo}
+          anio={vehiculo.anio}
           elementos={misElementos}
           reload={reloadElementos}
         />

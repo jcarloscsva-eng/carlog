@@ -154,11 +154,17 @@ interface Visita {
 export function ElementosTab({
   vehiculoId,
   kmActual,
+  marca,
+  modelo,
+  anio,
   elementos,
   reload,
 }: {
   vehiculoId: string
   kmActual: number
+  marca: string
+  modelo: string
+  anio: number
   elementos: Elemento[]
   reload: () => void
 }) {
@@ -171,6 +177,24 @@ export function ElementosTab({
   const [editing, setEditing] = useState<Elemento | null>(null)
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
+
+  const [sugerencias, setSugerencias] = useState<{ tipo: string; intervaloKm?: number; intervaloMeses?: number }[] | null>(null)
+  const [cargandoSugerencias, setCargandoSugerencias] = useState(false)
+  const [errorSugerencias, setErrorSugerencias] = useState<string | null>(null)
+
+  async function handleSugerencias() {
+    setCargandoSugerencias(true)
+    setErrorSugerencias(null)
+    try {
+      const { sugerencias } = await api.ai.mantenimientoSugerido({ marca, modelo, anio })
+      if (sugerencias.length === 0) setErrorSugerencias('La IA no ha devuelto ninguna sugerencia. Inténtalo de nuevo.')
+      setSugerencias(sugerencias)
+    } catch (err) {
+      setErrorSugerencias((err as Error).message)
+    } finally {
+      setCargandoSugerencias(false)
+    }
+  }
 
   const salud = useMemo(
     () => calcularSaludElementos(new Date(), kmActual, elementos),
@@ -298,6 +322,45 @@ export function ElementosTab({
           )}
         </div>
       )}
+
+      <div className="mb-5">
+        {sugerencias === null ? (
+          <button onClick={handleSugerencias} disabled={cargandoSugerencias} className="btn-ghost text-sm">
+            {cargandoSugerencias
+              ? 'Consultando…'
+              : `🤖 Plan de mantenimiento sugerido para tu ${marca} ${modelo} (IA)`}
+          </button>
+        ) : (
+          <div className="panel p-4">
+            <div className="mb-2 flex items-center justify-between">
+              <span className="eyebrow">Sugerido por IA para {marca} {modelo}</span>
+              <button onClick={() => setSugerencias(null)} className="text-xs text-ink-dim hover:text-stamp">
+                Ocultar
+              </button>
+            </div>
+            {sugerencias.length > 0 ? (
+              <ul className="space-y-1.5">
+                {sugerencias.map((s) => (
+                  <li key={s.tipo} className="flex items-center justify-between gap-2 rounded bg-paper-2 px-2 py-1.5 text-sm">
+                    <span className="text-ink">{s.tipo}</span>
+                    <span className="text-xs text-ink-dim">
+                      {[s.intervaloKm ? `${s.intervaloKm.toLocaleString('es-ES')} km` : null, s.intervaloMeses ? `${s.intervaloMeses} meses` : null]
+                        .filter(Boolean)
+                        .join(' / ') || 'sin intervalo'}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-ink-dim">Sin sugerencias.</p>
+            )}
+            <p className="mt-2 text-xs text-ink-dim">
+              Orientativo, generado por IA — no es el manual oficial del fabricante. Úsalo como referencia al rellenar la visita de abajo.
+            </p>
+          </div>
+        )}
+        {errorSugerencias && <p className="mt-2 text-sm text-red-700">{errorSugerencias}</p>}
+      </div>
 
       <div className="panel mb-4 p-4">
         <VisitaForm key={formKey} submitting={submitting} error={error} onSubmit={handleSubmit} />

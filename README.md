@@ -176,7 +176,28 @@ npx web-push generate-vapid-keys
 Guarda la pública y la privada — la pública también va en
 `app/.env.local` como `VITE_VAPID_PUBLIC_KEY`.
 
-## 5. Desarrollo local
+## 5. Workers AI (diagnóstico de averías y mantenimiento sugerido)
+
+Dos funciones usan IA para dar una respuesta orientativa, no un enlace de
+búsqueda: el diagnóstico de una avería descrita a mano, y el plan de
+mantenimiento sugerido para el modelo exacto del vehículo. Corre sobre
+**Cloudflare Workers AI**, con cuota gratuita diaria — no hace falta cuenta
+en otro proveedor ni gestionar una API key propia.
+
+Activarlo (una vez, en el proyecto Pages):
+1. Dashboard de Cloudflare → tu proyecto Pages → **Settings → Functions →
+   AI Bindings** → añade un binding con el nombre exacto `AI` (mayúsculas,
+   así lo espera el código en `shared/ai.ts`).
+2. No hace falta ninguna variable ni secret adicional — Workers AI se
+   factura a la cuenta de Cloudflare, no por API key.
+
+Si el binding no está activado, los endpoints `/api/ai/*` devuelven un
+error explicándolo en vez de fallar en silencio.
+
+En desarrollo local, `npm run dev:pages` ya incluye el flag `--ai=AI`
+(usa tu sesión de `wrangler login`, consume cuota real aunque sea local).
+
+## 6. Desarrollo local
 
 ```bash
 npm install
@@ -204,7 +225,7 @@ un código real por Resend (necesitas `RESEND_API_KEY` y `SESSION_SECRET` en
 `.dev.vars`) y verifica el código. La sesión dura 30 días, así que solo lo
 harás una vez por navegador.
 
-## 6. Deploy
+## 7. Deploy
 
 **Pages (frontend + API):**
 1. Sube el repo (privado) a GitHub.
@@ -215,6 +236,9 @@ harás una vez por navegador.
 3. Añade los secrets de `.env.example` en Settings → Environment variables
    (o con `wrangler pages secret put <NOMBRE>`), incluyendo `SESSION_SECRET`
    y `ALLOWED_EMAILS`.
+4. (Opcional) Activa el binding `AI` en Settings → Functions → AI Bindings
+   — ver §5 — para que funcionen el diagnóstico de averías y el plan de
+   mantenimiento sugerido. Sin él, el resto de la app funciona igual.
 
 **Cron worker (alertas):**
 ```bash

@@ -102,4 +102,16 @@ export const api = {
       method: 'POST',
       body: JSON.stringify(subscription),
     }),
+  ai: {
+    diagnosticoAveria: (data: { marca: string; modelo: string; anio: number; descripcion: string }) =>
+      request<{ diagnostico: string }>('/ai/diagnostico-averia', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    mantenimientoSugerido: (data: { marca: string; modelo: string; anio: number }) =>
+      request<{ sugerencias: { tipo: string; intervaloKm?: number; intervaloMeses?: number }[] }>(
+        '/ai/mantenimiento-sugerido',
+        { method: 'POST', body: JSON.stringify(data) },
+      ),
+  },
 }

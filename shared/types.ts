@@ -29,6 +29,8 @@ export interface Averia {
   fecha: string
   descripcion: string
   estado: AveriaEstado
+  /** Diagnóstico orientativo generado por IA a partir de la descripción — se guarda para no volver a pedirlo cada vez. */
+  diagnosticoIA?: string
 }
 
 /**

@@ -68,6 +68,7 @@ export function averiaFromAirtable(id: string, fields: AirtableFields): Averia {
     fecha: String(fields.Fecha ?? ''),
     descripcion: String(fields.Descripcion ?? ''),
     estado: (fields.Estado as Averia['estado']) ?? 'Pendiente',
+    diagnosticoIA: fields.Diagnostico_IA ? String(fields.Diagnostico_IA) : undefined,
   }
 }
 
@@ -77,6 +78,7 @@ export function averiaToAirtable(a: Omit<Averia, 'id'>): AirtableFields {
     Fecha: a.fecha,
     Descripcion: a.descripcion,
     Estado: a.estado,
+    Diagnostico_IA: a.diagnosticoIA || null,
   }
 }
 
