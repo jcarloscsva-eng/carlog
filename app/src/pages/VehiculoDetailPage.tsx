@@ -16,13 +16,13 @@ import { calcularAntiguedad } from '@shared/vehiculo'
 import { listarAvisos } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
-const TABS = ['Pasaporte', 'Averías', 'Elementos', 'ITV', 'Seguro'] as const
+const TABS = ['Pasaporte', 'Averías', 'Mantenimiento', 'ITV', 'Seguro'] as const
 type Tab = (typeof TABS)[number]
 
 const TAB_ICONS: Record<Tab, typeof IconAveria> = {
   Pasaporte: IconVehiculo,
   Averías: IconAveria,
-  Elementos: IconMantenimiento,
+  Mantenimiento: IconMantenimiento,
   ITV: IconItv,
   Seguro: IconSeguro,
 }
@@ -277,7 +277,7 @@ export function VehiculoDetailPage() {
           reload={reloadAverias}
         />
       )}
-      {tab === 'Elementos' && vehiculo && (
+      {tab === 'Mantenimiento' && vehiculo && (
         <ElementosTab
           vehiculoId={matricula}
           kmActual={vehiculo.kmActual}
