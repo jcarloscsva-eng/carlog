@@ -113,6 +113,14 @@ agruparlos en la interfaz, no para el cálculo de alertas.
 | Referencia_Id | Single line text |
 | Fecha_Enviada | Date |
 
+**IaUsos**
+| Campo | Tipo |
+|---|---|
+| Email | Single line text |
+
+Un registro por cada llamada a `/api/ai/*` (ver §5) — sirve solo para
+contar el uso por hora y aplicar el límite, no hace falta limpiarla a mano.
+
 **LoginCodes**
 | Campo | Tipo |
 |---|---|
@@ -145,7 +153,7 @@ solo uso enviado por email:
    minutos) y lo envía con Resend.
 2. El usuario introduce el código → `POST /api/auth/verify-code` lo valida
    (máximo 5 intentos), y si es correcto, crea una cookie de sesión firmada
-   (HMAC-SHA256, 30 días) — `httpOnly`, `Secure`, `SameSite=Lax`.
+   (HMAC-SHA256, 14 días) — `httpOnly`, `Secure`, `SameSite=Lax`.
 3. El resto de endpoints (`shared/http.ts` → `withAuth`) leen esa cookie y
    verifican la firma con `SESSION_SECRET` para identificar al usuario.
 
@@ -194,6 +202,10 @@ Activarlo (una vez, en el proyecto Pages):
 Si el binding no está activado, los endpoints `/api/ai/*` devuelven un
 error explicándolo en vez de fallar en silencio.
 
+Cada usuario tiene un límite de 20 consultas de IA por hora (tabla
+`IaUsos`, ver arriba), para que nadie pueda agotar la cuota gratuita
+compartida a base de peticiones repetidas.
+
 En desarrollo local, `npm run dev:pages` ya incluye el flag `--ai=AI`
 (usa tu sesión de `wrangler login`, consume cuota real aunque sea local).
 
@@ -222,8 +234,8 @@ curl "http://localhost:8787/__run?token=cualquier-cadena"
 
 El login funciona igual en local que en producción: pide tu email, te manda
 un código real por Resend (necesitas `RESEND_API_KEY` y `SESSION_SECRET` en
-`.dev.vars`) y verifica el código. La sesión dura 30 días, así que solo lo
-harás una vez por navegador.
+`.dev.vars`) y verifica el código. La sesión dura 14 días, así que solo lo
+harás de vez en cuando por navegador.
 
 ## 7. Deploy
 

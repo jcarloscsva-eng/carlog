@@ -22,6 +22,7 @@ export const TABLES = {
   AlertasEnviadas: 'AlertasEnviadas',
   LoginCodes: 'LoginCodes',
   UsuariosPermitidos: 'UsuariosPermitidos',
+  IaUsos: 'IaUsos',
 } as const
 
 interface AirtableFields {

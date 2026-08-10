@@ -1,6 +1,7 @@
 import {
   airtableCreate,
   airtableDelete,
+  airtableFormulaString,
   airtableGet,
   airtableList,
   airtableUpdate,
@@ -28,11 +29,13 @@ export function makeListCreateHandlers<T extends ConVehiculo>(config: EntityConf
   const onRequestGet: PagesFunction<Env> = async ({ request, env }) =>
     withAuth(request, env, async (email) => {
       const vehiculos = await getVehiculosDelUsuario(env, email)
-      const ownedMatriculas = new Set(vehiculos.map((v) => v.matricula))
-      const records = await airtableList<Record<string, unknown>>(env, config.table)
-      const mine = records
-        .map((r) => config.fromAirtable(r.id, r.fields))
-        .filter((item) => ownedMatriculas.has(item.vehiculoId))
+      if (vehiculos.length === 0) return json([])
+      // Se acota la consulta a Airtable a las matrículas del propio usuario
+      // (en vez de traer la tabla entera y filtrar aquí) para no tener en
+      // memoria, aunque sea de paso, historial de otros usuarios.
+      const formula = `OR(${vehiculos.map((v) => `{Vehiculo} = '${airtableFormulaString(v.matricula)}'`).join(',')})`
+      const records = await airtableList<Record<string, unknown>>(env, config.table, formula)
+      const mine = records.map((r) => config.fromAirtable(r.id, r.fields))
       return json(mine)
     })
 

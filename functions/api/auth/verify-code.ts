@@ -15,7 +15,12 @@ type Env = AirtableEnv & {
 }
 
 const MAX_ATTEMPTS = 5
-const SESSION_TTL_SECONDS = 30 * 24 * 60 * 60 // 30 días
+// La sesión es un token HMAC autocontenido: logout solo borra la cookie del
+// navegador, no hay lista de revocación server-side (añadirla implicaría
+// una consulta a Airtable en CADA petición autenticada de la app, no solo
+// en el login). Como mitigación, la validez se acorta de 30 a 14 días para
+// reducir la ventana en la que un token filtrado seguiría siendo válido.
+const SESSION_TTL_SECONDS = 14 * 24 * 60 * 60 // 14 días
 
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const body = (await request.json().catch(() => ({}))) as { email?: string; code?: string }

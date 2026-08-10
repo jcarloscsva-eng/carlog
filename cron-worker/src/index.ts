@@ -10,6 +10,7 @@ import {
 } from '../../shared/airtable-mappers'
 import { calcularAlertasPendientes } from '../../shared/alerts'
 import { intervaloSugerido } from '../../shared/elementos-catalogo'
+import { escapeHtml } from '../../shared/email'
 import { sendAlertEmail, sendWebPush, type NotificationsEnv } from '../../shared/notifications'
 import type { Elemento, Itv, Vehiculo } from '../../shared/types'
 
@@ -86,7 +87,7 @@ async function ejecutarRevisionDeAlertas(env: Env): Promise<void> {
       env,
       email,
       `Carlog — ${alerta.titulo}`,
-      `<p><strong>${alerta.titulo}</strong></p><p>${alerta.detalle}</p><p><a href="${env.APP_URL}">Abrir Carlog</a></p>`,
+      `<p><strong>${escapeHtml(alerta.titulo)}</strong></p><p>${escapeHtml(alerta.detalle)}</p><p><a href="${env.APP_URL}">Abrir Carlog</a></p>`,
     ).catch((err) => console.error('Error enviando email de alerta', err))
 
     await Promise.all(
