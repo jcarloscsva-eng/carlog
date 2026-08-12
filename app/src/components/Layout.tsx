@@ -3,7 +3,7 @@ import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { NotificationsButton } from './NotificationsButton'
 import { useAuth } from './AuthGate'
-import { IconGarage, IconReportes, IconUsers } from './Icons'
+import { IconCerrar, IconGarage, IconReportes, IconUsers, IconVehiculo } from './Icons'
 
 const linkClass = ({ isActive }: { isActive: boolean }) =>
   `nav-link flex items-center gap-1.5 ${isActive ? 'active' : ''}`
@@ -49,9 +49,10 @@ export function Layout() {
       </header>
       <main className="mx-auto max-w-5xl px-4 py-8">
         {showKmReminder && (
-          <div className="entry mb-6 flex items-start justify-between gap-3 p-3">
-            <p className="text-sm text-ink">
-              📏 ¿Tienes a mano el cuentakilómetros? Actualiza el kilometraje de tus
+          <div className="entry mb-6 flex items-start gap-3 p-3">
+            <IconVehiculo className="mt-0.5 h-4 w-4 shrink-0 text-stamp" aria-hidden="true" />
+            <p className="flex-1 text-sm text-ink">
+              ¿Tienes a mano el cuentakilómetros? Actualiza el kilometraje de tus
               vehículos para que las alertas de mantenimiento e ITV no se despisten. —{' '}
               <Link
                 to={kmReminderHref}
@@ -63,10 +64,10 @@ export function Layout() {
             </p>
             <button
               onClick={dismissKmReminder}
-              className="shrink-0 text-ink-dim hover:text-stamp"
+              className="shrink-0 text-ink-dim transition hover:text-stamp"
               aria-label="Descartar aviso"
             >
-              ✕
+              <IconCerrar className="h-4 w-4" aria-hidden="true" />
             </button>
           </div>
         )}

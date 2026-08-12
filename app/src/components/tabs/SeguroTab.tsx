@@ -94,7 +94,7 @@ function PolizaForm({
         placeholder="Teléfono de asistencia (opcional)"
         className="input sm:col-span-2"
       />
-      {error && <p className="text-sm text-red-700 sm:col-span-2">{error}</p>}
+      {error && <p className="text-sm text-stamp sm:col-span-2">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
         {submitting ? 'Guardando…' : submitLabel}
       </button>
@@ -217,7 +217,7 @@ function PartesSection({
             <input name="terceroImplicado" type="checkbox" />
             Hay un tercero implicado
           </label>
-          {error && <p className="text-sm text-red-700 sm:col-span-2">{error}</p>}
+          {error && <p className="text-sm text-stamp sm:col-span-2">{error}</p>}
           <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
             {submitting ? 'Guardando…' : 'Dar de alta parte'}
           </button>
@@ -295,7 +295,7 @@ function PartesSection({
               <input name="terceroImplicado" type="checkbox" defaultChecked={editing.terceroImplicado} />
               Hay un tercero implicado
             </label>
-            {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
+            {editError && <p className="text-sm text-stamp sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>
@@ -373,9 +373,12 @@ export function SeguroTab({
         <div className="entry mb-6 p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm text-ink">
-                {polizaVigente.compania} — {polizaVigente.tipoCobertura}
-              </p>
+              <div className="mb-1 flex items-center gap-2">
+                <p className="text-sm text-ink">
+                  {polizaVigente.compania} — {polizaVigente.tipoCobertura}
+                </p>
+                <EstadoStamp estado="Vigente" destacado />
+              </div>
               <p className="text-xs text-ink-dim">
                 Póliza {polizaVigente.numeroPoliza} · {polizaVigente.precio.toLocaleString('es-ES')} €/año
               </p>
@@ -383,8 +386,8 @@ export function SeguroTab({
                 Renueva el {new Date(polizaVigente.fechaRenovacion).toLocaleDateString('es-ES')}
                 {(() => {
                   const dias = diasHastaRenovacion(polizaVigente.fechaRenovacion)
-                  if (dias < 0) return <span className="ml-1 font-medium text-red-700">(caducada)</span>
-                  if (dias <= 30) return <span className="ml-1 font-medium text-amber-700">(en {dias} días)</span>
+                  if (dias < 0) return <span className="ml-1 font-medium text-stamp">(caducada)</span>
+                  if (dias <= 30) return <span className="ml-1 font-medium text-gold">(en {dias} días)</span>
                   return null
                 })()}
               </p>

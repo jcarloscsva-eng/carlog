@@ -129,6 +129,24 @@ export function IconUsers(props: SVGProps<SVGSVGElement>) {
   )
 }
 
+/** Diagnóstico / sugerencia generados por IA: una chispa, no un emoji de robot. */
+export function IconChispa(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M12 3.5v4M12 16.5v4M3.5 12h4M16.5 12h4" />
+      <path d="M6.3 6.3l2.3 2.3M15.4 15.4l2.3 2.3M17.7 6.3l-2.3 2.3M8.6 15.4l-2.3 2.3" />
+    </Icon>
+  )
+}
+
+export function IconCerrar(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
+    </Icon>
+  )
+}
+
 export function IconGarage(props: SVGProps<SVGSVGElement>) {
   return (
     <Icon {...props}>

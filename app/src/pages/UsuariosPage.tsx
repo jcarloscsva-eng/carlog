@@ -74,11 +74,11 @@ export function UsuariosPage() {
         <button type="submit" disabled={submitting} className="btn-primary sm:col-span-1">
           {submitting ? 'Añadiendo…' : '+ Dar acceso'}
         </button>
-        {formError && <p className="text-sm text-red-700 sm:col-span-3">{formError}</p>}
+        {formError && <p className="text-sm text-stamp sm:col-span-3">{formError}</p>}
       </form>
 
       {loading && <p className="text-sm text-ink-dim">Cargando…</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-stamp">{error}</p>}
 
       <ul className="space-y-2">
         {usuarios.map((u) => (

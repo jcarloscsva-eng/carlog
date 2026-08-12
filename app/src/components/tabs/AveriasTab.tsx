@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import type { Averia } from '@shared/types'
 import { api } from '../../lib/api'
 import { EstadoStamp } from '../EstadoStamp'
-import { IconEdit, IconTrash } from '../Icons'
+import { IconChispa, IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -115,7 +115,7 @@ export function AveriasTab({
       {averias.length > 0 && (
         <OrdenFechaButton orden={orden} onToggle={() => setOrden((o) => (o === 'desc' ? 'asc' : 'desc'))} />
       )}
-      {errorIA && <p className="mb-2 text-sm text-red-700">{errorIA}</p>}
+      {errorIA && <p className="mb-2 text-sm text-stamp">{errorIA}</p>}
 
       <ul className="space-y-2">
         {ordenadas.map((a) => (
@@ -126,7 +126,10 @@ export function AveriasTab({
               <EstadoStamp estado={a.estado} />
               {a.diagnosticoIA && (
                 <div className="mt-2 rounded-md border border-line bg-paper p-2 text-xs text-ink">
-                  <span className="mb-0.5 block font-medium text-ink-bright">🤖 Diagnóstico orientativo</span>
+                  <span className="mb-0.5 flex items-center gap-1 font-medium text-ink-bright">
+                    <IconChispa className="h-3.5 w-3.5 text-stamp" aria-hidden="true" />
+                    Diagnóstico orientativo
+                  </span>
                   {a.diagnosticoIA}
                 </div>
               )}
@@ -147,9 +150,10 @@ export function AveriasTab({
                 <button
                   onClick={() => handleDiagnostico(a)}
                   disabled={diagnosticando === a.id}
-                  className="btn-ghost px-2 py-1 text-xs"
+                  className="btn-ghost flex items-center gap-1 px-2 py-1 text-xs"
                 >
-                  {diagnosticando === a.id ? 'Diagnosticando…' : '🤖 Diagnóstico con IA'}
+                  <IconChispa className="h-3.5 w-3.5" aria-hidden="true" />
+                  {diagnosticando === a.id ? 'Diagnosticando…' : 'Diagnóstico con IA'}
                 </button>
               )}
               <a
@@ -177,7 +181,7 @@ export function AveriasTab({
               className="input"
               rows={3}
             />
-            {editError && <p className="text-sm text-red-700">{editError}</p>}
+            {editError && <p className="text-sm text-stamp">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>

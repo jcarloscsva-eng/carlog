@@ -9,11 +9,10 @@ import { SeguroTab } from '../components/tabs/SeguroTab'
 import { PasaporteTab } from '../components/tabs/PasaporteTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
-import { GloboAvisos } from '../components/GloboAvisos'
-import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconVehiculo } from '../components/Icons'
+import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconTrash, IconVehiculo } from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { listarAvisos } from '@shared/avisos'
+import { listarAgenda } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
 const TABS = ['Pasaporte', 'Averías', 'Mantenimiento', 'ITV', 'Seguro'] as const
@@ -28,6 +27,17 @@ const TAB_ICONS: Record<Tab, typeof IconAveria> = {
 }
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
+
+/** "leído hace 6 días" — para saber si el kilometraje de la cabecera es de fiar. */
+function textoLectura(iso: string): string {
+  if (!iso) return 'sin fecha de lectura'
+  const fecha = new Date(iso)
+  if (Number.isNaN(fecha.getTime())) return 'sin fecha de lectura'
+  const dias = Math.floor((Date.now() - fecha.getTime()) / 86_400_000)
+  if (dias <= 0) return 'leído hoy'
+  if (dias === 1) return 'leído ayer'
+  return `leído hace ${dias} días`
+}
 
 export function VehiculoDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -57,14 +67,22 @@ export function VehiculoDetailPage() {
   const [editSubmitting, setEditSubmitting] = useState(false)
   const [editError, setEditError] = useState<string | null>(null)
   const [focusKm, setFocusKm] = useState(false)
-  // null = todavía sin elección manual: se abre sola si hay algo urgente.
-  // En cuanto se pulsa el botón, manda esa elección tanto para abrir como
-  // para cerrar, aunque siga habiendo tareas urgentes.
-  const [tareasAbiertas, setTareasAbiertas] = useState<boolean | null>(null)
+  const [menuAbierto, setMenuAbierto] = useState(false)
 
+  // Al llegar desde la agenda del garaje con ?tab=ITV, abre esa pestaña en
+  // vez del Pasaporte: la acción de la agenda ("Registrar ITV →") debe
+  // dejar al usuario justo donde puede resolverla.
   useEffect(() => {
-    setTareasAbiertas(null)
-  }, [routeId])
+    const pedida = searchParams.get('tab')
+    if (pedida && (TABS as readonly string[]).includes(pedida)) {
+      setTab(pedida as Tab)
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        next.delete('tab')
+        return next
+      }, { replace: true })
+    }
+  }, [searchParams, setSearchParams])
 
   // Al llegar con ?editarKm=1 (p. ej. desde el aviso de kilometraje
   // desactualizado), abre directamente el formulario de edición con el
@@ -91,42 +109,25 @@ export function VehiculoDetailPage() {
     () => (vehiculo ? calcularProximasTareas(new Date(), vehiculo, misElementos, misItvs) : []),
     [vehiculo, misElementos, misItvs],
   )
-  // Colapsada por defecto cuando no hay prisa por nada: con todo al día no
-  // hace falta ocupar espacio en pantalla, pero en cuanto algo se pone
-  // urgente se despliega sola aunque el usuario no la haya tocado.
-  const hayTareasUrgentes = proximasTareas.some((t) => t.urgente)
-  const mostrarTareas = tareasAbiertas ?? hayTareasUrgentes
 
   const misAverias = useMemo(() => averias.filter((a) => a.vehiculoId === matricula), [averias, matricula])
   const misSeguros = useMemo(() => seguros.filter((s) => s.vehiculoId === matricula), [seguros, matricula])
 
   // Hasta que no están las cuatro colecciones, el recuento sería falso
-  // (ver VehiculosPage): mejor no pintar el globo que pintar uno erróneo.
+  // (ver VehiculosPage): mejor no decir nada que decir algo erróneo.
   const avisosListos =
     !cargandoAverias &&
     !cargandoElementos &&
     !cargandoItvs &&
     !cargandoSeguros
 
-  const detalleAvisos = useMemo(
+  const agenda = useMemo(
     () =>
-      vehiculo ? listarAvisos(new Date(), vehiculo, misAverias, misElementos, misItvs, misSeguros) : [],
+      vehiculo ? listarAgenda(new Date(), vehiculo, misAverias, misElementos, misItvs, misSeguros) : [],
     [vehiculo, misAverias, misElementos, misItvs, misSeguros],
   )
-  const avisos = useMemo(
-    () =>
-      vehiculo
-        ? {
-            total: detalleAvisos.length,
-            nivel: detalleAvisos.some((a) => a.nivel === 'grave')
-              ? ('grave' as const)
-              : detalleAvisos.length > 0
-                ? ('leve' as const)
-                : null,
-          }
-        : null,
-    [vehiculo, detalleAvisos],
-  )
+  const vencidas = agenda.filter((i) => i.urgencia === 'vencida').length
+  const abiertos = agenda.filter((i) => i.urgencia !== 'programada').length
 
   async function handleEliminar() {
     if (!vehiculo) return
@@ -183,100 +184,123 @@ export function VehiculoDetailPage() {
               strokeLinecap="round"
             />
           </svg>
-          <div className="relative">
+          <div className="relative min-w-0">
             <div className="mb-1 flex flex-wrap items-center gap-2">
               <h1 className="font-display text-2xl font-semibold">
                 {vehiculo.marca} {vehiculo.modelo}
               </h1>
-              {avisosListos && avisos && <GloboAvisos avisos={avisos} detalle={detalleAvisos} enOscuro />}
+              <span className="flex items-stretch overflow-hidden rounded border border-[#423a2c] bg-[#1b1712] whitespace-nowrap">
+                <i className="w-[3px] shrink-0" style={{ background: '#4f6b78' }} aria-hidden="true" />
+                <span className="px-1.5 py-0.5 font-display text-xs font-bold tracking-[0.08em] text-[#f4eee1]">
+                  {vehiculo.matricula}
+                </span>
+              </span>
             </div>
-            <p className="text-sm text-[#b6a98f]">
-              {vehiculo.matricula} · {vehiculo.anio} · {vehiculo.tipo} ·{' '}
-              <span className="font-medium text-[#e2624f]">{vehiculo.kmActual.toLocaleString('es-ES')} km</span>
-              {vehiculo.fechaCompra && (
-                <>
-                  {' '}
-                  · {calcularAntiguedad(vehiculo.fechaCompra, new Date())} años contigo
-                </>
+
+            {/* Tres cifras, no una lista de datos separados por puntos: lo
+                que se mira al abrir la ficha es el kilometraje, la edad y
+                si hay algo pendiente. */}
+            <div className="mt-3 flex flex-wrap gap-x-8 gap-y-3">
+              <div>
+                <p
+                  className="font-display text-xl font-bold text-[#e2624f]"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {vehiculo.kmActual.toLocaleString('es-ES')} km
+                </p>
+                <p className="text-xs text-[#b6a98f]">{textoLectura(vehiculo.kmActualFecha)}</p>
+              </div>
+              <div>
+                <p className="font-display text-xl font-bold text-[#f4eee1]">{vehiculo.anio}</p>
+                <p className="text-xs text-[#b6a98f]">
+                  {vehiculo.tipo}
+                  {vehiculo.fechaCompra &&
+                    ` · ${calcularAntiguedad(vehiculo.fechaCompra, new Date())} años contigo`}
+                </p>
+              </div>
+              {avisosListos && (
+                <div>
+                  <p
+                    className="font-display text-xl font-bold"
+                    style={{ color: vencidas > 0 ? '#e2624f' : abiertos > 0 ? '#d9a92e' : '#92ac72' }}
+                  >
+                    {vencidas > 0 ? vencidas : abiertos > 0 ? abiertos : '—'}
+                  </p>
+                  <p className="text-xs text-[#b6a98f]">
+                    {vencidas > 0
+                      ? vencidas === 1
+                        ? 'vencida'
+                        : 'vencidas'
+                      : abiertos > 0
+                        ? abiertos === 1
+                          ? 'aviso abierto'
+                          : 'avisos abiertos'
+                        : 'todo al día'}
+                  </p>
+                </div>
               )}
-            </p>
+            </div>
           </div>
-          <div className="relative flex shrink-0 gap-2">
+
+          <div className="relative flex shrink-0 items-start gap-2">
+            <button
+              onClick={() => {
+                setEditing(true)
+                setFocusKm(true)
+              }}
+              className="rounded-md bg-[#a13328] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:brightness-125"
+            >
+              Anotar kilometraje
+            </button>
             <button
               onClick={() => setEditing(true)}
               className="rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:border-[#e2624f] hover:text-[#e2624f]"
             >
               Editar
             </button>
-            <button
-              onClick={() => {
-                setBorrando(true)
-                setConfirmacion('')
-                setErrorBorrado(null)
-              }}
-              className="rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#b6a98f] transition hover:border-[#e2624f] hover:text-[#e2624f]"
-              title="Eliminar vehículo"
-            >
-              Eliminar
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* El Pasaporte ya termina con "Lo que viene", así que aquí sobraría. */}
-      {vehiculo && tab !== 'Pasaporte' && (
-        <div className="mb-6">
-          <button
-            onClick={() => setTareasAbiertas(!mostrarTareas)}
-            className="flex w-full items-center justify-between gap-2 text-left"
-          >
-            <span className="eyebrow">Próximas tareas</span>
-            <span
-              className={`flex items-center gap-1.5 text-xs ${
-                hayTareasUrgentes && !mostrarTareas ? 'font-medium text-amber-700' : 'text-ink-dim'
-              }`}
-            >
-              {!hayTareasUrgentes && (mostrarTareas ? 'Todo al día' : 'Todo al día — ver detalle')}
-              {hayTareasUrgentes && !mostrarTareas && (
+            {/* Borrar el vehículo y todo su historial es lo más destructivo
+                que hace la app: no merece un botón permanente al lado de
+                Editar. La confirmación por matrícula se mantiene. */}
+            <div className="relative">
+              <button
+                onClick={() => setMenuAbierto((v) => !v)}
+                className="rounded-md border border-[#423a2c] px-2.5 py-2 text-sm font-medium text-[#b6a98f] transition hover:border-[#e2624f] hover:text-[#e2624f]"
+                aria-haspopup="menu"
+                aria-expanded={menuAbierto}
+                aria-label="Más acciones"
+              >
+                ⋯
+              </button>
+              {menuAbierto && (
                 <>
-                  {proximasTareas.filter((t) => t.urgente).length}{' '}
-                  {proximasTareas.filter((t) => t.urgente).length === 1 ? 'urgente' : 'urgentes'}
+                  <button
+                    className="fixed inset-0 z-10 cursor-default"
+                    onClick={() => setMenuAbierto(false)}
+                    aria-label="Cerrar menú"
+                    tabIndex={-1}
+                  />
+                  <div
+                    role="menu"
+                    className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-md border border-line bg-paper-2 shadow-lg"
+                  >
+                    <button
+                      role="menuitem"
+                      onClick={() => {
+                        setMenuAbierto(false)
+                        setBorrando(true)
+                        setConfirmacion('')
+                        setErrorBorrado(null)
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-stamp transition hover:bg-stamp-soft"
+                    >
+                      <IconTrash className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      Eliminar vehículo
+                    </button>
+                  </div>
                 </>
               )}
-              <svg
-                viewBox="0 0 24 24"
-                className={`h-3.5 w-3.5 shrink-0 transition-transform ${mostrarTareas ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </span>
-          </button>
-          {mostrarTareas && (
-            <>
-              <ul className="mt-2 space-y-2">
-                {proximasTareas.map((t) => (
-                  <li key={`${t.tipo}-${t.titulo}`} className="entry flex items-center justify-between p-3">
-                    <span className="text-sm text-ink">
-                      {t.tipo === 'ITV' ? 'ITV' : t.titulo}
-                    </span>
-                    <span className={`text-xs ${t.urgente ? 'font-medium text-amber-700' : 'text-ink-dim'}`}>
-                      {t.fechaObjetivo && t.fechaObjetivo.toLocaleDateString('es-ES')}
-                      {t.fechaObjetivo && t.kmObjetivo ? ' · ' : ''}
-                      {t.kmObjetivo && `${t.kmObjetivo.toLocaleString('es-ES')} km`}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              {proximasTareas.length <= 1 && (
-                <p className="mt-2 text-xs text-ink-dim">
-                  Añade un intervalo (km o meses) a un mantenimiento para que también aparezca aquí.
-                </p>
-              )}
-            </>
-          )}
+            </div>
+          </div>
         </div>
       )}
 
@@ -309,6 +333,7 @@ export function VehiculoDetailPage() {
           seguros={misSeguros}
           partes={partes.filter((p) => p.vehiculoId === matricula)}
           proximasTareas={proximasTareas}
+          agenda={agenda}
         />
       )}
       {tab === 'Averías' && (
@@ -376,7 +401,7 @@ export function VehiculoDetailPage() {
               autoComplete="off"
             />
 
-            {errorBorrado && <p className="mb-3 text-sm text-red-700">{errorBorrado}</p>}
+            {errorBorrado && <p className="mb-3 text-sm text-stamp">{errorBorrado}</p>}
 
             <div className="flex gap-2">
               <button onClick={() => setBorrando(false)} className="btn-ghost flex-1">
@@ -448,7 +473,7 @@ export function VehiculoDetailPage() {
                 className="input w-full"
               />
             </div>
-            {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
+            {editError && <p className="text-sm text-stamp sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>

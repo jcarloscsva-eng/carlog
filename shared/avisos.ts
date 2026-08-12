@@ -3,21 +3,32 @@ import { intervaloSugerido } from './elementos-catalogo'
 import { calcularProximaItv } from './itv-rules'
 import type { Averia, Elemento, Itv, Seguro, Vehiculo } from './types'
 
-/** Grave = algo ya vencido. Leve = algo por vencer. */
-export type NivelAviso = 'leve' | 'grave'
+/** Grave = algo ya vencido. Leve = algo por vencer. Uso interno de clasificarVencimiento. */
+type NivelAviso = 'leve' | 'grave'
 
-export interface AvisosVehiculo {
-  /** Número total de avisos, leves y graves juntos. */
-  total: number
-  /** El peor de los niveles presentes; null si no hay ningún aviso. */
-  nivel: NivelAviso | null
-}
+/**
+ * Urgencia en la agenda: además de lo vencido y lo que está por vencer
+ * (los dos niveles del globo), incluye lo que está simplemente programado
+ * más adelante — útil para planificar, pero que no debe contar como aviso.
+ */
+export type UrgenciaAgenda = 'vencida' | 'pronto' | 'programada'
 
-export interface AvisoDetalle {
-  nivel: NivelAviso
+/** De qué parte de la ficha sale el aviso, para poder enlazar a su pestaña. */
+export type CategoriaAviso = 'itv' | 'seguro' | 'averia' | 'elemento'
+
+export interface AgendaItem {
+  urgencia: UrgenciaAgenda
+  categoria: CategoriaAviso
   titulo: string
   detalle: string
+  /** Días hasta el objetivo, redondeados; negativo si ya pasó. null si solo vence por km. */
+  dias: number | null
+  /** Km que faltan para el objetivo; negativo si ya se pasaron. null si solo vence por fecha. */
+  kmRestantes: number | null
 }
+
+/** Horizonte por defecto de la agenda: lo que cabe en un trimestre. */
+export const DIAS_HORIZONTE_AGENDA = 90
 
 function diasHasta(hoy: Date, fecha: Date): number {
   return (fecha.getTime() - hoy.getTime()) / 86_400_000
@@ -72,39 +83,79 @@ function formateaFecha(fecha: Date): string {
   return fecha.toLocaleDateString('es-ES')
 }
 
+/** Métricas de "cuánto falta" comunes a cualquier vencimiento. */
+function restantes(
+  hoy: Date,
+  kmActual: number,
+  fechaObjetivo?: Date,
+  kmObjetivo?: number,
+): { dias: number | null; kmRestantes: number | null } {
+  return {
+    dias: fechaObjetivo !== undefined ? Math.round(diasHasta(hoy, fechaObjetivo)) : null,
+    kmRestantes: kmObjetivo !== undefined ? kmObjetivo - kmActual : null,
+  }
+}
+
 /**
- * Cada cosa pendiente de revisar en un vehículo, con su motivo en texto —
- * lo que ve el usuario al pulsar el globo de avisos. `contarAvisos` es un
- * resumen de esta misma lista.
+ * ¿Entra en el horizonte de la agenda aunque todavía no sea un aviso?
+ * Solo por fecha: un objetivo por km no tiene forma fiable de traducirse a
+ * días sin conocer el uso real del vehículo.
+ */
+function dentroDelHorizonte(
+  hoy: Date,
+  diasHorizonte: number,
+  fechaObjetivo?: Date,
+): boolean {
+  return fechaObjetivo !== undefined && diasHasta(hoy, fechaObjetivo) <= diasHorizonte
+}
+
+const ORDEN_URGENCIA: Record<UrgenciaAgenda, number> = { vencida: 0, pronto: 1, programada: 2 }
+
+/**
+ * Todo lo que este vehículo tiene por delante dentro del horizonte dado:
+ * lo vencido, lo que está por vencer y lo simplemente programado, con su
+ * motivo en texto y cuánto falta. Es la fuente única de la que sale tanto
+ * la agenda del garaje como "Lo que viene" del Pasaporte.
  *
  * No consulta nada: trabaja sobre datos ya cargados en pantalla.
  */
-export function listarAvisos(
+export function listarAgenda(
   hoy: Date,
   vehiculo: Vehiculo,
   averias: Averia[],
   elementos: Elemento[],
   itvs: Itv[],
   seguros: Seguro[],
-): AvisoDetalle[] {
+  diasHorizonte: number = DIAS_HORIZONTE_AGENDA,
+): AgendaItem[] {
   const kmActual = vehiculo.kmActual
-  const avisos: AvisoDetalle[] = []
+  const items: AgendaItem[] = []
 
   // Una avería sin resolver es algo que ya está pasando, no algo que se acerca.
   for (const a of averias) {
     if (a.estado === 'Pendiente') {
-      avisos.push({ nivel: 'grave', titulo: 'Avería pendiente', detalle: a.descripcion })
+      items.push({
+        urgencia: 'vencida',
+        categoria: 'averia',
+        titulo: 'Avería pendiente',
+        detalle: a.descripcion,
+        dias: null,
+        kmRestantes: null,
+      })
     }
   }
 
   const ultimaItv = [...itvs].sort((a, b) => b.fechaRealizada.localeCompare(a.fechaRealizada))[0]
   const fechaProximaItv = ultimaItv ? new Date(ultimaItv.fechaProxima) : calcularProximaItv(vehiculo)
   const nivelItv = clasificarVencimiento(hoy, kmActual, fechaProximaItv, undefined)
-  if (nivelItv) {
-    avisos.push({
-      nivel: nivelItv,
+  if (nivelItv || dentroDelHorizonte(hoy, diasHorizonte, fechaProximaItv)) {
+    const vencida = nivelItv === 'grave'
+    items.push({
+      urgencia: nivelItv === 'grave' ? 'vencida' : nivelItv === 'leve' ? 'pronto' : 'programada',
+      categoria: 'itv',
       titulo: 'ITV',
-      detalle: nivelItv === 'grave' ? `Caducó el ${formateaFecha(fechaProximaItv)}` : `Vence el ${formateaFecha(fechaProximaItv)}`,
+      detalle: `${vencida ? 'Caducó el' : 'Vence el'} ${formateaFecha(fechaProximaItv)}`,
+      ...restantes(hoy, kmActual, fechaProximaItv, undefined),
     })
   }
 
@@ -114,14 +165,14 @@ export function listarAvisos(
   if (seguroVigente) {
     const fechaRenovacion = new Date(seguroVigente.fechaRenovacion)
     const nivelSeguro = clasificarVencimiento(hoy, kmActual, fechaRenovacion, undefined)
-    if (nivelSeguro) {
-      avisos.push({
-        nivel: nivelSeguro,
+    if (nivelSeguro || dentroDelHorizonte(hoy, diasHorizonte, fechaRenovacion)) {
+      const vencido = nivelSeguro === 'grave'
+      items.push({
+        urgencia: nivelSeguro === 'grave' ? 'vencida' : nivelSeguro === 'leve' ? 'pronto' : 'programada',
+        categoria: 'seguro',
         titulo: 'Seguro',
-        detalle:
-          nivelSeguro === 'grave'
-            ? `Caducó el ${formateaFecha(fechaRenovacion)}`
-            : `Renueva el ${formateaFecha(fechaRenovacion)}`,
+        detalle: `${vencido ? 'Caducó el' : 'Renueva el'} ${formateaFecha(fechaRenovacion)}`,
+        ...restantes(hoy, kmActual, fechaRenovacion, undefined),
       })
     }
   }
@@ -136,7 +187,7 @@ export function listarAvisos(
     const fechaObjetivo = intervalo.meses ? addMeses(new Date(e.fecha), intervalo.meses) : undefined
     const kmObjetivo = intervalo.km ? e.km + intervalo.km : undefined
     const nivel = clasificarVencimiento(hoy, kmActual, fechaObjetivo, kmObjetivo)
-    if (!nivel) continue
+    if (!nivel && !dentroDelHorizonte(hoy, diasHorizonte, fechaObjetivo)) continue
 
     const vencidoPorKm = kmObjetivo !== undefined && kmActual >= kmObjetivo
     const partes = [
@@ -144,28 +195,23 @@ export function listarAvisos(
       kmObjetivo ? `${vencidoPorKm ? 'ya pasados' : 'a'} ${kmObjetivo.toLocaleString('es-ES')} km` : null,
     ].filter(Boolean)
 
-    avisos.push({ nivel, titulo: e.tipo, detalle: partes.join(' · ') })
+    items.push({
+      urgencia: nivel === 'grave' ? 'vencida' : nivel === 'leve' ? 'pronto' : 'programada',
+      categoria: 'elemento',
+      titulo: e.tipo,
+      detalle: partes.join(' · '),
+      ...restantes(hoy, kmActual, fechaObjetivo, kmObjetivo),
+    })
   }
 
-  return avisos
-}
-
-/**
- * Cuenta cuántas cosas hay que revisar en un vehículo y con qué gravedad,
- * para el globo de avisos. Es un recuento, no una puntuación ponderada:
- * cada situación pendiente suma exactamente uno.
- */
-export function contarAvisos(
-  hoy: Date,
-  vehiculo: Vehiculo,
-  averias: Averia[],
-  elementos: Elemento[],
-  itvs: Itv[],
-  seguros: Seguro[],
-): AvisosVehiculo {
-  const avisos = listarAvisos(hoy, vehiculo, averias, elementos, itvs, seguros)
-  return {
-    total: avisos.length,
-    nivel: avisos.some((a) => a.nivel === 'grave') ? 'grave' : avisos.length > 0 ? 'leve' : null,
-  }
+  return items.sort((a, b) => {
+    const porUrgencia = ORDEN_URGENCIA[a.urgencia] - ORDEN_URGENCIA[b.urgencia]
+    if (porUrgencia !== 0) return porUrgencia
+    // Dentro de la misma urgencia, primero lo que antes toca. Lo que solo
+    // vence por km va al final del grupo: no se puede fechar.
+    if (a.dias === null && b.dias === null) return 0
+    if (a.dias === null) return 1
+    if (b.dias === null) return -1
+    return a.dias - b.dias
+  })
 }
