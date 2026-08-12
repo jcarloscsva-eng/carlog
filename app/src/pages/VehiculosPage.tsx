@@ -105,18 +105,31 @@ function ResumenHero({
   )
 }
 
+/** Cuántas filas se ven antes de tener que pedir el resto explícitamente. */
+const AGENDA_VISIBLES = 5
+
 /**
  * Todo lo que pide atención en el garaje entero, ordenado por urgencia.
  * Antes esto era un número dentro de un globo en la esquina de cada
  * tarjeta: obligaba a entrar en el vehículo para saber qué pasaba. La
  * portada debe decir la tarea, no contarla.
+ *
+ * Un solo vehículo con varios elementos vencidos puede llenar la pantalla
+ * de filas casi idénticas antes de que se vea nada más del garaje — así
+ * que a partir de AGENDA_VISIBLES el resto queda a un clic, no oculto del
+ * todo.
  */
 function AgendaGaraje({
   filas,
 }: {
   filas: { item: AgendaItem; vehiculo: Vehiculo }[]
 }) {
+  const [expandida, setExpandida] = useState(false)
+
   if (filas.length === 0) return null
+
+  const restantes = filas.length - AGENDA_VISIBLES
+  const visibles = expandida || restantes <= 0 ? filas : filas.slice(0, AGENDA_VISIBLES)
 
   return (
     <section className="mb-8">
@@ -125,7 +138,7 @@ function AgendaGaraje({
         <span className="text-xs text-ink-dim">Próximos 90 días</span>
       </div>
       <ul className="space-y-2">
-        {filas.map(({ item, vehiculo }) => (
+        {visibles.map(({ item, vehiculo }) => (
           <AgendaFila
             key={`${vehiculo.id}-${item.categoria}-${item.titulo}`}
             item={item}
@@ -135,6 +148,14 @@ function AgendaGaraje({
           />
         ))}
       </ul>
+      {restantes > 0 && (
+        <button
+          onClick={() => setExpandida((v) => !v)}
+          className="mt-2 text-xs font-medium text-ink-dim transition hover:text-stamp"
+        >
+          {expandida ? '← Mostrar menos' : `Ver ${restantes} más →`}
+        </button>
+      )}
     </section>
   )
 }
