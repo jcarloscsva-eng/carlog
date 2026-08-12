@@ -1,4 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
+import { IconCerrar } from './Icons'
 
 export function Modal({
   open,
@@ -35,10 +36,10 @@ export function Modal({
           <h2 className="font-display text-lg font-semibold text-ink-bright">{title}</h2>
           <button
             onClick={onClose}
-            className="text-ink-dim hover:text-stamp"
+            className="text-ink-dim transition hover:text-stamp"
             aria-label="Cerrar"
           >
-            ✕
+            <IconCerrar className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
         {children}

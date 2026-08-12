@@ -43,7 +43,7 @@ function ItvForm({
         <option value="Desfavorable">Desfavorable</option>
         <option value="Negativo">Negativo</option>
       </select>
-      {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
+      {error && <p className="text-sm text-stamp sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : submitLabel}
       </button>

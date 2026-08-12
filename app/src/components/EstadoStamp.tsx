@@ -12,10 +12,16 @@ const TONOS: Record<string, Tono> = {
   Abierto: 'is-negative',
   'En trámite': 'is-neutral',
   Cerrado: 'is-positive',
+  // Póliza
+  Vigente: 'is-positive',
 }
 
-/** Estado mostrado como un sello de tinta, en vez de texto de color plano. */
-export function EstadoStamp({ estado }: { estado: string }) {
+/**
+ * Estado mostrado como una píldora plana (para listas: averías, ITV,
+ * partes) o, con `destacado`, como el sello de tinta girado — reservado a
+ * un único elemento por pantalla para que no se convierta en ruido.
+ */
+export function EstadoStamp({ estado, destacado = false }: { estado: string; destacado?: boolean }) {
   const tono = TONOS[estado] ?? 'is-neutral'
-  return <span className={`stamp-badge ${tono}`}>{estado}</span>
+  return <span className={`${destacado ? 'stamp-badge' : 'badge-pill'} ${tono}`}>{estado}</span>
 }

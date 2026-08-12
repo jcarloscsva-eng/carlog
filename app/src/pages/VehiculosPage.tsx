@@ -4,23 +4,62 @@ import { api } from '../lib/api'
 import { useCollection } from '../hooks/useCollection'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
-import { GloboAvisos } from '../components/GloboAvisos'
-import { calcularProximasTareas } from '@shared/alerts'
+import { AgendaFila, resumenCorto } from '../components/AgendaFila'
 import { calcularAntiguedad } from '@shared/vehiculo'
-import { listarAvisos } from '@shared/avisos'
+import { listarAgenda, type AgendaItem } from '@shared/avisos'
 import type { Vehiculo, VehiculoTipo } from '@shared/types'
 
 const TIPOS: VehiculoTipo[] = ['Turismo', 'Moto', 'Furgoneta']
 
+const PALABRAS = ['cero', 'una', 'dos', 'tres', 'cuatro', 'cinco', 'seis', 'siete', 'ocho', 'nueve', 'diez']
+
+/** "Dos cosas piden atención" se lee mejor que "2 cosas". A partir de diez, cifra. */
+function enPalabras(n: number): string {
+  return n < PALABRAS.length ? PALABRAS[n] : String(n)
+}
+
+function diasDesde(iso: string, hoy: Date): number | null {
+  if (!iso) return null
+  const fecha = new Date(iso)
+  if (Number.isNaN(fecha.getTime())) return null
+  return Math.floor((hoy.getTime() - fecha.getTime()) / 86_400_000)
+}
+
+function textoUltimaLectura(dias: number | null): string {
+  if (dias === null) return 'sin kilometraje anotado'
+  if (dias <= 0) return 'último kilometraje anotado hoy'
+  if (dias === 1) return 'último kilometraje anotado ayer'
+  return `último kilometraje anotado hace ${dias} días`
+}
+
+/**
+ * La cabecera responde a una sola pregunta: ¿tengo que hacer algo? Antes
+ * repetía los mismos números en tres chips (vehículos, km totales,
+ * próximas) — y la suma de kilómetros de todo el garaje no es un dato con
+ * el que nadie decida nada.
+ */
 function ResumenHero({
   totalVehiculos,
-  kmTotal,
-  tareasUrgentes,
+  pendientes,
+  diasUltimaLectura,
+  hrefAnotarKm,
+  onAñadir,
+  añadiendo,
 }: {
   totalVehiculos: number
-  kmTotal: number
-  tareasUrgentes: number
+  pendientes: number
+  diasUltimaLectura: number | null
+  hrefAnotarKm: string
+  onAñadir: () => void
+  añadiendo: boolean
 }) {
+  const titular =
+    pendientes === 0
+      ? 'Todo al día'
+      : `${enPalabras(pendientes).replace(/^./, (c) => c.toUpperCase())} ${
+          pendientes === 1 ? 'cosa pide' : 'cosas piden'
+        } atención`
+
   return (
     <div className="dark-hero mb-6 flex flex-wrap items-center justify-between gap-4 px-5 py-4">
       <svg className="dark-hero-ghost" viewBox="0 0 57 64" aria-hidden="true">
@@ -41,30 +80,138 @@ function ResumenHero({
             <circle cx="4.5" cy="5" r="2.2" fill="#f4eee1" />
           </g>
         </svg>
-        <p className="font-display text-base font-semibold">
-          {tareasUrgentes > 0
-            ? `${tareasUrgentes} tarea${tareasUrgentes > 1 ? 's' : ''} próxima${tareasUrgentes > 1 ? 's' : ''}`
-            : 'Todo al día'}
-          <span className="mt-0.5 block text-xs font-normal text-[#b6a98f]">
-            {totalVehiculos} vehículo{totalVehiculos !== 1 ? 's' : ''} en tu garaje
+        <p className="font-display text-lg font-semibold">
+          {titular}
+          <span className="mt-0.5 block font-sans text-xs font-normal text-[#b6a98f]">
+            {totalVehiculos} vehículo{totalVehiculos !== 1 ? 's' : ''} · {textoUltimaLectura(diasUltimaLectura)}
           </span>
         </p>
       </div>
-      <div className="relative flex gap-5">
-        <div className="dark-hero-chip text-center">
-          <div className="v text-xl">{totalVehiculos}</div>
-          <div className="l">Vehículo{totalVehiculos !== 1 ? 's' : ''}</div>
-        </div>
-        <div className="dark-hero-chip text-center">
-          <div className="v text-xl">{kmTotal.toLocaleString('es-ES')}</div>
-          <div className="l">Km</div>
-        </div>
-        <div className="dark-hero-chip text-center">
-          <div className="v text-xl">{tareasUrgentes}</div>
-          <div className="l">Próximas</div>
-        </div>
+      <div className="relative flex shrink-0 gap-2">
+        <Link
+          to={hrefAnotarKm}
+          className="rounded-md border border-[#423a2c] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:border-[#e2624f] hover:text-[#e2624f]"
+        >
+          Anotar km
+        </Link>
+        <button
+          onClick={onAñadir}
+          className="rounded-md bg-[#a13328] px-3 py-2 text-sm font-medium text-[#f4eee1] transition hover:brightness-125"
+        >
+          {añadiendo ? 'Cancelar' : '+ Añadir vehículo'}
+        </button>
       </div>
     </div>
+  )
+}
+
+/**
+ * Todo lo que pide atención en el garaje entero, ordenado por urgencia.
+ * Antes esto era un número dentro de un globo en la esquina de cada
+ * tarjeta: obligaba a entrar en el vehículo para saber qué pasaba. La
+ * portada debe decir la tarea, no contarla.
+ */
+function AgendaGaraje({
+  filas,
+}: {
+  filas: { item: AgendaItem; vehiculo: Vehiculo }[]
+}) {
+  if (filas.length === 0) return null
+
+  return (
+    <section className="mb-8">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="eyebrow">Agenda del garaje</span>
+        <span className="text-xs text-ink-dim">Próximos 90 días</span>
+      </div>
+      <ul className="space-y-2">
+        {filas.map(({ item, vehiculo }) => (
+          <AgendaFila
+            key={`${vehiculo.id}-${item.categoria}-${item.titulo}`}
+            item={item}
+            vehiculoId={vehiculo.id}
+            vehiculoNombre={`${vehiculo.marca} ${vehiculo.modelo}`}
+            matricula={vehiculo.matricula}
+          />
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+/**
+ * La matrícula como placa: es el identificador con el que uno reconoce su
+ * coche, no un dato más de la lista separado por puntos. La banda azul de
+ * la izquierda imita la franja europea.
+ */
+function Placa({ matricula }: { matricula: string }) {
+  return (
+    <span className="flex shrink-0 items-stretch overflow-hidden rounded border border-line bg-paper whitespace-nowrap">
+      <i className="w-[3px] shrink-0" style={{ background: 'var(--color-itv)' }} aria-hidden="true" />
+      <span className="px-1.5 py-0.5 font-display text-xs font-bold tracking-[0.08em] text-ink-bright">
+        {matricula}
+      </span>
+    </span>
+  )
+}
+
+const PUNTO_URGENCIA = {
+  vencida: 'var(--color-stamp)',
+  pronto: 'var(--color-gold)',
+  programada: 'var(--color-itv)',
+} as const
+
+function TarjetaVehiculo({
+  vehiculo,
+  proximo,
+  avisosListos,
+}: {
+  vehiculo: Vehiculo
+  proximo: AgendaItem | null
+  avisosListos: boolean
+}) {
+  const dias = diasDesde(vehiculo.kmActualFecha, new Date())
+  const lectura =
+    dias === null ? null : dias <= 0 ? 'leído hoy' : dias === 1 ? 'leído ayer' : `leído hace ${dias} días`
+
+  return (
+    <Link to={`/vehiculos/${vehiculo.id}`} className="panel block p-4 transition hover:border-stamp/30">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate font-display text-[1.0625rem] font-semibold text-ink-bright">
+            {vehiculo.marca} {vehiculo.modelo}
+          </p>
+          <p className="truncate text-xs text-ink-dim">
+            {vehiculo.tipo} · {vehiculo.anio}
+            {vehiculo.fechaCompra && ` · ${calcularAntiguedad(vehiculo.fechaCompra, new Date())} años contigo`}
+          </p>
+        </div>
+        <Placa matricula={vehiculo.matricula} />
+      </div>
+
+      <p className="flex items-baseline gap-1.5">
+        <span
+          className="font-display text-2xl font-bold text-ink-bright"
+          style={{ fontVariantNumeric: 'tabular-nums' }}
+        >
+          {vehiculo.kmActual.toLocaleString('es-ES')}
+        </span>
+        <span className="text-xs text-ink-dim">km{lectura && ` · ${lectura}`}</span>
+      </p>
+
+      {avisosListos && (
+        <p className="mt-3 flex items-center gap-2 border-t border-line pt-2.5 text-xs">
+          <i
+            className="inline-block h-2 w-2 shrink-0 rounded-full"
+            style={{ background: proximo ? PUNTO_URGENCIA[proximo.urgencia] : 'var(--color-olive)' }}
+            aria-hidden="true"
+          />
+          <span className={proximo?.urgencia === 'vencida' ? 'text-stamp' : 'text-ink-dim'}>
+            {proximo ? resumenCorto(proximo) : 'Todo al día'}
+          </span>
+        </p>
+      )}
+    </Link>
   )
 }
 
@@ -113,13 +260,13 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
       {sugerencias === null ? (
         <button onClick={pedirSugerencias} disabled={cargando} className="entry mb-2 block w-full p-3 text-left transition hover:border-stamp/40">
           <p className="text-sm font-medium text-ink-bright">
-            {cargando ? 'Consultando…' : '🤖 Mantenimiento recomendado por el fabricante'}
+            {cargando ? 'Consultando…' : 'Mantenimiento recomendado por el fabricante'}
           </p>
           <p className="text-xs text-ink-dim">Plan orientativo generado por IA para este modelo exacto.</p>
         </button>
       ) : (
         <div className="entry mb-2 p-3">
-          <p className="mb-1.5 text-sm font-medium text-ink-bright">🤖 Mantenimiento recomendado (IA)</p>
+          <p className="mb-1.5 text-sm font-medium text-ink-bright">Mantenimiento recomendado (IA)</p>
           {sugerencias.length > 0 ? (
             <ul className="space-y-1">
               {sugerencias.map((s) => (
@@ -138,7 +285,7 @@ function InfoVehiculoNuevo({ vehiculo, onClose }: { vehiculo: Vehiculo; onClose:
           )}
         </div>
       )}
-      {errorIA && <p className="mb-2 text-xs text-red-700">{errorIA}</p>}
+      {errorIA && <p className="mb-2 text-xs text-stamp">{errorIA}</p>}
 
       <ul className="space-y-2">
         {enlaces.map((e) => (
@@ -185,36 +332,72 @@ export function VehiculosPage() {
   const [showForm, setShowForm] = useState(false)
   const [infoVehiculo, setInfoVehiculo] = useState<Vehiculo | null>(null)
 
-  const tareasUrgentes = useMemo(() => {
+  // Una sola pasada: la agenda de cada vehículo alimenta a la vez la
+  // sección de arriba, el titular de la cabecera y el pie de su tarjeta.
+  const agendaPorVehiculo = useMemo(() => {
     const hoy = new Date()
-    return vehiculos.reduce((total, v) => {
-      const propios = calcularProximasTareas(
-        hoy,
-        v,
-        elementos.filter((e) => e.vehiculoId === v.matricula),
-        itvs.filter((i) => i.vehiculoId === v.matricula),
-      )
-      return total + propios.filter((t) => t.urgente).length
-    }, 0)
-  }, [vehiculos, elementos, itvs])
+    return new Map(
+      vehiculos.map((v) => [
+        v.id,
+        listarAgenda(
+          hoy,
+          v,
+          averias.filter((a) => a.vehiculoId === v.matricula),
+          elementos.filter((e) => e.vehiculoId === v.matricula),
+          itvs.filter((i) => i.vehiculoId === v.matricula),
+          seguros.filter((s) => s.vehiculoId === v.matricula),
+        ),
+      ]),
+    )
+  }, [vehiculos, averias, elementos, itvs, seguros])
 
-  const kmTotal = useMemo(() => vehiculos.reduce((sum, v) => sum + v.kmActual, 0), [vehiculos])
+  const filasAgenda = useMemo(
+    () =>
+      vehiculos
+        .flatMap((v) => (agendaPorVehiculo.get(v.id) ?? []).map((item) => ({ item, vehiculo: v })))
+        .sort((a, b) => {
+          const orden = { vencida: 0, pronto: 1, programada: 2 }
+          const porUrgencia = orden[a.item.urgencia] - orden[b.item.urgencia]
+          if (porUrgencia !== 0) return porUrgencia
+          if (a.item.dias === null) return 1
+          if (b.item.dias === null) return -1
+          return a.item.dias - b.item.dias
+        }),
+    [vehiculos, agendaPorVehiculo],
+  )
+
+  // El titular cuenta lo que reclama atención, no lo que solo está previsto.
+  const pendientes = filasAgenda.filter((f) => f.item.urgencia !== 'programada').length
+
+  const hoy = new Date()
+  const diasUltimaLectura = useMemo(() => {
+    const dias = vehiculos.map((v) => diasDesde(v.kmActualFecha, hoy)).filter((d): d is number => d !== null)
+    return dias.length > 0 ? Math.min(...dias) : null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculos])
+
+  // "Anotar km" lleva al vehículo con la lectura más vieja: es el que de
+  // verdad la necesita, y con uno solo en el garaje es el único posible.
+  const hrefAnotarKm = useMemo(() => {
+    const conFecha = [...vehiculos].sort(
+      (a, b) => (diasDesde(b.kmActualFecha, hoy) ?? 0) - (diasDesde(a.kmActualFecha, hoy) ?? 0),
+    )
+    return conFecha.length > 0 ? `/vehiculos/${conFecha[0].id}?editarKm=1` : '/'
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehiculos])
 
   return (
     <div>
       {!loading && vehiculos.length > 0 && (
-        <ResumenHero totalVehiculos={vehiculos.length} kmTotal={kmTotal} tareasUrgentes={tareasUrgentes} />
+        <ResumenHero
+          totalVehiculos={vehiculos.length}
+          pendientes={avisosListos ? pendientes : 0}
+          diasUltimaLectura={diasUltimaLectura}
+          hrefAnotarKm={hrefAnotarKm}
+          onAñadir={() => setShowForm((v) => !v)}
+          añadiendo={showForm}
+        />
       )}
-
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <span className="eyebrow">Tu garaje</span>
-          <h1 className="heading mt-1 text-2xl">Vehículos</h1>
-        </div>
-        <button onClick={() => setShowForm((v) => !v)} className="btn-primary">
-          {showForm ? 'Cancelar' : '+ Añadir vehículo'}
-        </button>
-      </div>
 
       {showForm && (
         <NuevoVehiculoForm
@@ -229,45 +412,23 @@ export function VehiculosPage() {
       {infoVehiculo && <InfoVehiculoNuevo vehiculo={infoVehiculo} onClose={() => setInfoVehiculo(null)} />}
 
       {loading && <p className="text-sm text-ink-dim">Cargando…</p>}
-      {error && <p className="text-sm text-red-700">{error}</p>}
+      {error && <p className="text-sm text-stamp">{error}</p>}
+
+      {avisosListos && <AgendaGaraje filas={filasAgenda} />}
+
+      <div className="mb-3 flex items-center justify-between">
+        <span className="eyebrow">Tu garaje</span>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {vehiculos.map((v) => {
-          const detalleAvisos = listarAvisos(
-            new Date(),
-            v,
-            averias.filter((a) => a.vehiculoId === v.matricula),
-            elementos.filter((e) => e.vehiculoId === v.matricula),
-            itvs.filter((i) => i.vehiculoId === v.matricula),
-            seguros.filter((s) => s.vehiculoId === v.matricula),
-          )
-          const avisos = {
-            total: detalleAvisos.length,
-            nivel: detalleAvisos.some((a) => a.nivel === 'grave')
-              ? ('grave' as const)
-              : detalleAvisos.length > 0
-                ? ('leve' as const)
-                : null,
-          }
-          return (
-            <div key={v.id} className="relative">
-              {avisosListos && <GloboAvisos avisos={avisos} detalle={detalleAvisos} esquina />}
-              <Link
-                to={`/vehiculos/${v.id}`}
-                className="panel block p-4 transition hover:border-stamp/30"
-              >
-                <p className="font-display text-lg font-medium text-ink-bright">
-                  {v.marca} {v.modelo}
-                </p>
-                <p className="text-sm text-ink-dim">
-                  {v.matricula} · {v.anio} · {v.tipo}
-                  {v.fechaCompra && ` · ${calcularAntiguedad(v.fechaCompra, new Date())} años contigo`}
-                </p>
-                <p className="mt-1 text-sm text-stamp">{v.kmActual.toLocaleString('es-ES')} km</p>
-              </Link>
-            </div>
-          )
-        })}
+        {vehiculos.map((v) => (
+          <TarjetaVehiculo
+            key={v.id}
+            vehiculo={v}
+            proximo={(agendaPorVehiculo.get(v.id) ?? []).find((i) => i.urgencia !== 'programada') ?? null}
+            avisosListos={avisosListos}
+          />
+        ))}
       </div>
 
       {!loading && vehiculos.length === 0 && (
@@ -322,7 +483,7 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => v
         <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
         <input name="fechaCompra" type="date" className="input w-full" />
       </div>
-      {error && <p className="sm:col-span-2 text-sm text-red-700">{error}</p>}
+      {error && <p className="sm:col-span-2 text-sm text-stamp">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">
         {submitting ? 'Guardando…' : 'Guardar vehículo'}
       </button>

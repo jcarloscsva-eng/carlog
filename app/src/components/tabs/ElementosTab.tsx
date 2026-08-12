@@ -3,7 +3,7 @@ import type { Elemento } from '@shared/types'
 import { calcularSaludElementos, type SaludElemento } from '@shared/alerts'
 import { ELEMENTOS_COMUNES } from '@shared/elementos-catalogo'
 import { api } from '../../lib/api'
-import { IconEdit, IconTrash } from '../Icons'
+import { IconChispa, IconEdit, IconTrash } from '../Icons'
 import { Modal } from '../Modal'
 import { OrdenFechaButton, type OrdenFecha } from '../OrdenFechaButton'
 
@@ -134,7 +134,7 @@ function VisitaForm({
           className="input mt-2 w-full"
         />
       </div>
-      {error && <p className="text-sm text-red-700 sm:col-span-3">{error}</p>}
+      {error && <p className="text-sm text-stamp sm:col-span-3">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-3">
         {submitting ? 'Guardando…' : 'Añadir visita'}
       </button>
@@ -325,10 +325,15 @@ export function ElementosTab({
 
       <div className="mb-5">
         {sugerencias === null ? (
-          <button onClick={handleSugerencias} disabled={cargandoSugerencias} className="btn-ghost text-sm">
+          <button
+            onClick={handleSugerencias}
+            disabled={cargandoSugerencias}
+            className="btn-ghost flex items-center gap-1.5 text-sm"
+          >
+            <IconChispa className="h-4 w-4" aria-hidden="true" />
             {cargandoSugerencias
               ? 'Consultando…'
-              : `🤖 Plan de mantenimiento sugerido para tu ${marca} ${modelo} (IA)`}
+              : `Plan de mantenimiento sugerido para tu ${marca} ${modelo} (IA)`}
           </button>
         ) : (
           <div className="panel p-4">
@@ -359,7 +364,7 @@ export function ElementosTab({
             </p>
           </div>
         )}
-        {errorSugerencias && <p className="mt-2 text-sm text-red-700">{errorSugerencias}</p>}
+        {errorSugerencias && <p className="mt-2 text-sm text-stamp">{errorSugerencias}</p>}
       </div>
 
       <div className="panel mb-4 p-4">
@@ -442,7 +447,7 @@ export function ElementosTab({
               <label className="mb-1 block text-xs text-ink-dim">Avisar cada X meses (opcional)</label>
               <input name="intervaloMeses" type="number" defaultValue={editing.intervaloMeses} className="input w-full" />
             </div>
-            {editError && <p className="text-sm text-red-700 sm:col-span-2">{editError}</p>}
+            {editError && <p className="text-sm text-stamp sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
               {editSubmitting ? 'Guardando…' : 'Guardar cambios'}
             </button>

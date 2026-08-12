@@ -134,7 +134,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string, isAdmin: boolea
                 placeholder="tu@email.com"
                 className="input mb-3"
               />
-              {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
+              {error && <p className="mb-3 text-sm text-stamp">{error}</p>}
               <button type="submit" disabled={submitting} className="btn-primary w-full">
                 {submitting ? 'Enviando…' : 'Enviar código'}
               </button>
@@ -152,7 +152,7 @@ function LoginForm({ onLoggedIn }: { onLoggedIn: (email: string, isAdmin: boolea
                 placeholder="123456"
                 className="input mb-3 text-center text-lg tracking-[0.3em]"
               />
-              {error && <p className="mb-3 text-sm text-red-700">{error}</p>}
+              {error && <p className="mb-3 text-sm text-stamp">{error}</p>}
               <button type="submit" disabled={submitting} className="btn-primary w-full">
                 {submitting ? 'Comprobando…' : 'Entrar'}
               </button>

@@ -323,9 +323,30 @@ input[type='date']::-webkit-date-and-time-value {
     @apply text-stamp;
   }
 
+  /* Píldora de estado plana: la versión de lista del sello de abajo. Un
+     sello girado funciona como acento único, pero en una lista de diez
+     filas gira diez veces y se convierte en ruido — así que las listas
+     (averías, ITV, partes) usan esta variante sin rotación ni borde
+     discontinuo, y el sello se reserva para un único elemento destacado
+     por pantalla (p. ej. la póliza vigente). */
+  .badge-pill {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.66rem] font-semibold tracking-[0.04em] uppercase;
+    font-family: var(--font-sans);
+  }
+  .badge-pill.is-positive {
+    @apply bg-olive-soft text-olive;
+  }
+  .badge-pill.is-negative {
+    @apply bg-stamp-soft text-stamp;
+  }
+  .badge-pill.is-neutral {
+    @apply bg-gold-soft text-gold;
+  }
+
   /* Sello de estado: la app es un cuaderno de a bordo, así que un estado
-     (Resuelta, Favorable, Cerrado…) se marca como se marcaría a mano en
-     un cuaderno real — un sello de tinta, no una etiqueta de color plano. */
+     destacado (p. ej. "Vigente" en la póliza activa) se marca como se
+     marcaría a mano en un cuaderno real — un sello de tinta, no una
+     etiqueta de color plano. Solo para un único elemento por pantalla. */
   .stamp-badge {
     @apply relative inline-flex items-center rounded-full border-[1.5px] px-2.5 py-0.5 text-[0.66rem] font-semibold tracking-[0.09em] uppercase;
     font-family: var(--font-sans);

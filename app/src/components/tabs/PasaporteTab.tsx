@@ -3,8 +3,10 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import type { Averia, Elemento, Itv, Parte, Seguro, Vehiculo } from '@shared/types'
 import type { ProximaTarea } from '@shared/alerts'
+import type { AgendaItem } from '@shared/avisos'
 import { calcularAniosPropiedad } from '@shared/linea-propiedad'
 import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconVehiculo } from '../Icons'
+import { AgendaFila } from '../AgendaFila'
 import { LineaPropiedad } from '../LineaPropiedad'
 
 type TipoEvento = 'origen' | 'elemento' | 'itv' | 'averia' | 'seguro' | 'parte' | 'futuro'
@@ -50,6 +52,7 @@ export function PasaporteTab({
   seguros,
   partes,
   proximasTareas,
+  agenda,
 }: {
   vehiculo: Vehiculo
   averias: Averia[]
@@ -58,6 +61,7 @@ export function PasaporteTab({
   seguros: Seguro[]
   partes: Parte[]
   proximasTareas: ProximaTarea[]
+  agenda: AgendaItem[]
 }) {
   const eventos = useMemo<Evento[]>(() => {
     const lista: Evento[] = []
@@ -210,6 +214,28 @@ export function PasaporteTab({
 
   return (
     <div>
+      {/* Lo que viene abre el Pasaporte, siempre visible: antes vivía al
+          final de la pestaña y además duplicado en un bloque plegable
+          sobre las pestañas, que aparecía y desaparecía por su cuenta. */}
+      <section className="mb-8">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <span className="eyebrow">Lo que viene</span>
+          <span className="text-xs text-ink-dim">Próximos 90 días</span>
+        </div>
+        {agenda.length > 0 ? (
+          <ul className="space-y-2">
+            {agenda.map((item) => (
+              <AgendaFila key={`${item.categoria}-${item.titulo}`} item={item} />
+            ))}
+          </ul>
+        ) : (
+          <p className="rounded-md border border-dashed border-line p-3 text-sm text-ink-dim">
+            Nada a la vista en los próximos 90 días. Añade un intervalo (km o meses) a un
+            mantenimiento para que su próximo cambio también aparezca aquí.
+          </p>
+        )}
+      </section>
+
       <LineaPropiedad anios={aniosPropiedad} />
       <div className="mb-6 flex flex-wrap gap-x-5 gap-y-2 text-xs text-ink-dim">
         <span className="inline-flex items-center gap-1.5">
@@ -227,6 +253,10 @@ export function PasaporteTab({
         <span className="inline-flex items-center gap-1.5">
           <i className="inline-block h-0.5 w-4 rounded-full opacity-55" style={{ background: 'var(--color-ink-dim)' }} />
           Cobertura de seguro
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <i className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: 'var(--color-gold-soft)', border: '1px solid var(--color-gold)' }} />
+          Gasto del año
         </span>
         <span className="inline-flex items-center gap-1.5">
           <i className="inline-block h-0.5 w-4" style={{ background: 'var(--color-stamp)' }} />
@@ -293,30 +323,6 @@ export function PasaporteTab({
         </div>
       ))}
 
-      {futuros.length > 0 && (
-        <div className="mb-2">
-          <div className="mb-2 flex items-center gap-3">
-            <span className="font-display text-lg font-semibold text-ink-dim">Lo que viene</span>
-            <span className="h-px flex-1 bg-line" />
-          </div>
-          <ul className="space-y-2">
-            {futuros.map((f) => (
-              <li
-                key={f.clave}
-                className="flex items-start gap-3 rounded-md border border-dashed border-line p-3"
-              >
-                <IconItv className="mt-0.5 h-4 w-4 shrink-0 text-ink-dim" aria-hidden="true" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-ink">{f.titulo}</p>
-                  <p className={`text-xs ${f.urgente ? 'font-medium text-amber-700' : 'text-ink-dim'}`}>
-                    {f.detalle}
-                  </p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
     </div>
   )
 }
