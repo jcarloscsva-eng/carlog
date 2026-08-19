@@ -192,7 +192,16 @@ export function listarAgenda(
     const vencidoPorKm = kmObjetivo !== undefined && kmActual >= kmObjetivo
     const partes = [
       fechaObjetivo ? `${nivel === 'grave' && diasHasta(hoy, fechaObjetivo) < 0 ? 'Caducó el' : 'Toca el'} ${formateaFecha(fechaObjetivo)}` : null,
-      kmObjetivo ? `${vencidoPorKm ? 'ya pasados' : 'a'} ${kmObjetivo.toLocaleString('es-ES')} km` : null,
+      // Cuando ya se pasó el kilometraje objetivo, se muestra cuánto de más
+      // (kmActual - kmObjetivo) en vez del propio objetivo: "ya pasados
+      // 20.000 km" se leía como "20.000 km de exceso" cuando en realidad
+      // era el kilometraje al que tocaba cambiarlo, muy distinto del
+      // exceso real si el objetivo llevaba tiempo sin actualizarse.
+      kmObjetivo
+        ? vencidoPorKm
+          ? `${(kmActual - kmObjetivo).toLocaleString('es-ES')} km de más`
+          : `a ${kmObjetivo.toLocaleString('es-ES')} km`
+        : null,
     ].filter(Boolean)
 
     items.push({
