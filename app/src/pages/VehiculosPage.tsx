@@ -478,6 +478,9 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => v
         kmActual: Number(form.get('kmActual')),
         kmActualFecha: new Date().toISOString().slice(0, 10),
         fechaCompra: form.get('fechaCompra') ? String(form.get('fechaCompra')) : undefined,
+        kmAnualesEstimados: form.get('kmAnualesEstimados')
+          ? Number(form.get('kmAnualesEstimados'))
+          : undefined,
       })
       onCreated(vehiculo)
     } catch (err) {
@@ -503,6 +506,10 @@ function NuevoVehiculoForm({ onCreated }: { onCreated: (vehiculo: Vehiculo) => v
       <div className="min-w-0">
         <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
         <input name="fechaCompra" type="date" className="input w-full" />
+      </div>
+      <div className="min-w-0">
+        <label className="mb-1 block text-xs text-ink-dim">Km anuales estimados (opcional)</label>
+        <input name="kmAnualesEstimados" type="number" min="0" placeholder="p. ej. 12000" className="input w-full" />
       </div>
       {error && <p className="sm:col-span-2 text-sm text-stamp">{error}</p>}
       <button type="submit" disabled={submitting} className="btn-primary sm:col-span-2">

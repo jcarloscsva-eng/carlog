@@ -35,6 +35,8 @@ son los que usa el código):
 | Tipo | Single select: `Turismo`, `Moto`, `Furgoneta` |
 | Km_Actual | Number |
 | Km_Actual_Fecha | Date |
+| Fecha_Compra | Date (opcional) |
+| Km_Anuales_Estimados | Number (opcional) — respaldo para sugerir kilometraje mientras no hay historial suficiente, ver `estimarKmActual` en `shared/vehiculo.ts` |
 
 **Averias**
 | Campo | Tipo |

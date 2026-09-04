@@ -9,9 +9,18 @@ import { SeguroTab } from '../components/tabs/SeguroTab'
 import { PasaporteTab } from '../components/tabs/PasaporteTab'
 import { Modal } from '../components/Modal'
 import { MarcaModeloFields } from '../components/MarcaModeloFields'
-import { IconAveria, IconItv, IconMantenimiento, IconSeguro, IconTrash, IconVehiculo } from '../components/Icons'
+import {
+  IconAveria,
+  IconCerrar,
+  IconChispa,
+  IconItv,
+  IconMantenimiento,
+  IconSeguro,
+  IconTrash,
+  IconVehiculo,
+} from '../components/Icons'
 import { calcularProximasTareas } from '@shared/alerts'
-import { calcularAntiguedad } from '@shared/vehiculo'
+import { calcularAntiguedad, estimarKmActual, type LecturaKm } from '@shared/vehiculo'
 import { listarAgenda } from '@shared/avisos'
 import type { VehiculoTipo } from '@shared/types'
 
@@ -129,6 +138,39 @@ export function VehiculoDetailPage() {
   const vencidas = agenda.filter((i) => i.urgencia === 'vencida').length
   const abiertos = agenda.filter((i) => i.urgencia !== 'programada').length
 
+  // Cada elemento con km registrado es una lectura real del cuentakilómetros
+  // en su fecha — de ahí sale el ritmo de uso para sugerir el km de hoy.
+  const lecturasKm = useMemo<LecturaKm[]>(
+    () => misElementos.filter((e) => e.km > 0).map((e) => ({ fecha: e.fecha, km: e.km })),
+    [misElementos],
+  )
+  const [sugerenciaDescartada, setSugerenciaDescartada] = useState(false)
+  const sugerenciaKm = useMemo(
+    () => (vehiculo && !sugerenciaDescartada ? estimarKmActual(new Date(), vehiculo, lecturasKm) : null),
+    [vehiculo, lecturasKm, sugerenciaDescartada],
+  )
+  const [aplicandoSugerencia, setAplicandoSugerencia] = useState(false)
+  async function usarSugerenciaKm() {
+    if (!vehiculo || !sugerenciaKm) return
+    setAplicandoSugerencia(true)
+    try {
+      await api.vehiculos.update(vehiculo.id, {
+        kmActual: sugerenciaKm.km,
+        kmActualFecha: new Date().toISOString().slice(0, 10),
+      })
+      reloadVehiculos()
+    } catch {
+      // Sugerencia de bajo riesgo: si falla, se queda como estaba y el
+      // usuario siempre puede anotarlo a mano — no hace falta más aviso.
+    } finally {
+      setAplicandoSugerencia(false)
+    }
+  }
+
+  useEffect(() => {
+    setSugerenciaDescartada(false)
+  }, [routeId])
+
   async function handleEliminar() {
     if (!vehiculo) return
     setBorrandoEnCurso(true)
@@ -149,14 +191,23 @@ export function VehiculoDetailPage() {
     setEditSubmitting(true)
     setEditError(null)
     try {
+      const nuevoKm = Number(form.get('kmActual'))
       await api.vehiculos.update(vehiculo.id, {
         marca: String(form.get('marca')),
         modelo: String(form.get('modelo')),
         matricula: String(form.get('matricula')),
         anio: Number(form.get('anio')),
         tipo: form.get('tipo') as VehiculoTipo,
-        kmActual: Number(form.get('kmActual')),
+        kmActual: nuevoKm,
+        // Si el km cambia, hoy es la fecha de esa lectura — sin esto,
+        // "leído hace N días" y la sugerencia de km quedaban calculando
+        // siempre sobre la fecha del alta del vehículo, nunca la real.
+        kmActualFecha:
+          nuevoKm !== vehiculo.kmActual ? new Date().toISOString().slice(0, 10) : vehiculo.kmActualFecha,
         fechaCompra: form.get('fechaCompra') ? String(form.get('fechaCompra')) : undefined,
+        kmAnualesEstimados: form.get('kmAnualesEstimados')
+          ? Number(form.get('kmAnualesEstimados'))
+          : undefined,
       })
       setEditing(false)
       reloadVehiculos()
@@ -209,6 +260,26 @@ export function VehiculoDetailPage() {
                   {vehiculo.kmActual.toLocaleString('es-ES')} km
                 </p>
                 <p className="text-xs text-[#b6a98f]">{textoLectura(vehiculo.kmActualFecha)}</p>
+                {sugerenciaKm && (
+                  <p className="mt-1 flex items-center gap-1.5 text-xs text-[#b6a98f]">
+                    <IconChispa className="h-3 w-3 shrink-0 text-[#e2624f]" aria-hidden="true" />
+                    <span>≈ {sugerenciaKm.km.toLocaleString('es-ES')} km hoy</span>
+                    <button
+                      onClick={usarSugerenciaKm}
+                      disabled={aplicandoSugerencia}
+                      className="font-medium text-[#e2624f] hover:underline disabled:opacity-60"
+                    >
+                      {aplicandoSugerencia ? 'Aplicando…' : 'Usar'}
+                    </button>
+                    <button
+                      onClick={() => setSugerenciaDescartada(true)}
+                      className="text-[#b6a98f] transition hover:text-[#e2624f]"
+                      aria-label="Descartar sugerencia de kilometraje"
+                    >
+                      <IconCerrar className="h-3 w-3" aria-hidden="true" />
+                    </button>
+                  </p>
+                )}
               </div>
               <div>
                 <p className="font-display text-xl font-bold text-[#f4eee1]">{vehiculo.anio}</p>
@@ -464,7 +535,7 @@ export function VehiculoDetailPage() {
               placeholder="Km actual"
               className="input"
             />
-            <div className="min-w-0 sm:col-span-2">
+            <div className="min-w-0">
               <label className="mb-1 block text-xs text-ink-dim">Fecha de compra (opcional)</label>
               <input
                 name="fechaCompra"
@@ -472,6 +543,20 @@ export function VehiculoDetailPage() {
                 defaultValue={vehiculo.fechaCompra}
                 className="input w-full"
               />
+            </div>
+            <div className="min-w-0">
+              <label className="mb-1 block text-xs text-ink-dim">Km anuales estimados (opcional)</label>
+              <input
+                name="kmAnualesEstimados"
+                type="number"
+                min="0"
+                defaultValue={vehiculo.kmAnualesEstimados}
+                placeholder="p. ej. 12000"
+                className="input w-full"
+              />
+              <p className="mt-1 text-[0.65rem] text-ink-dim">
+                Para sugerirte el km al cabo del tiempo mientras no haya historial suficiente.
+              </p>
             </div>
             {editError && <p className="text-sm text-stamp sm:col-span-2">{editError}</p>}
             <button type="submit" disabled={editSubmitting} className="btn-primary sm:col-span-2">
