@@ -40,6 +40,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
       Km_Actual: body.kmActual,
       Km_Actual_Fecha: body.kmActualFecha,
       Fecha_Compra: body.fechaCompra || null,
+      Km_Anuales_Estimados: body.kmAnualesEstimados || null,
     })
     return json(vehiculoFromAirtable(record.id, record.fields))
   })

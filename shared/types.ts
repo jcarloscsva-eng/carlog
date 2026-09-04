@@ -12,6 +12,13 @@ export interface Vehiculo {
   kmActualFecha: string
   /** Fecha en la que compraste el vehículo (ISO yyyy-mm-dd). Opcional: los vehículos ya existentes no la tienen. */
   fechaCompra?: string
+  /**
+   * Km/año estimados a mano al dar de alta el vehículo. Solo se usa como
+   * respaldo para sugerir kilometraje mientras no hay historial real
+   * suficiente (ver `estimarKmActual` en shared/vehiculo.ts) — en cuanto
+   * hay dos o más lecturas reales, esas mandan.
+   */
+  kmAnualesEstimados?: number
 }
 
 /**
